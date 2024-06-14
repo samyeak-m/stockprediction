@@ -1,36 +1,53 @@
 package lstm;
 
 public class LSTMTrainer {
-    private LSTMNetwork network;
-    private double learningRate;
+    private final LSTMNetwork network;
+    private final double learningRate;
 
     public LSTMTrainer(LSTMNetwork network, double learningRate) {
         this.network = network;
         this.learningRate = learningRate;
     }
 
-    public void train(double[][] inputSequences, double[][] targetSequences, int epochs) {
+    public void train(double[][] inputs, double[][] targets, int epochs) {
         for (int epoch = 0; epoch < epochs; epoch++) {
-            double totalError = 0;
+            for (int i = 0; i < inputs.length; i++) {
+                double[] input = inputs[i];
+                double[] target = targets[i];
+                double[] hiddenState = new double[network.getHiddenSize()];
+                double[] cellState = new double[network.getHiddenSize()];
 
-            for (int i = 0; i < inputSequences.length; i++) {
-                double[] input = inputSequences[i];
-                double[] target = targetSequences[i];
-                double[] output = network.forward(input, network.getHiddenState(), network.getCellState());
+                double[] output = network.forward(input, hiddenState, cellState);
+                double error = target[0] - output[0];
+                double gradient = error * learningRate;
 
-                // Calculate error (mean squared error)
-                double error = 0;
-                for (int j = 0; j < output.length; j++) {
-                    error += Math.pow(output[j] - target[j], 2);
+                double[][] dWy = new double[network.getWy().length][network.getWy()[0].length];
+                double[] dby = new double[network.getBy().length];
+
+                for (int j = 0; j < dWy.length; j++) {
+                    for (int k = 0; k < dWy[j].length; k++) {
+                        dWy[j][k] = gradient * hiddenState[k];
+                    }
+                    dby[j] = gradient;
                 }
-                error /= output.length;
-                totalError += error;
 
-                // Backpropagation and weight update
-                network.backward(input, target, output, learningRate);
+                updateWeights(network.getWy(), dWy);
+                updateBiases(network.getBy(), dby);
             }
+        }
+    }
 
-            System.out.println("Epoch " + epoch + ", Error: " + totalError);
+    private void updateWeights(double[][] weights, double[][] gradients) {
+        for (int i = 0; i < weights.length; i++) {
+            for (int j = 0; j < weights[i].length; j++) {
+                weights[i][j] += gradients[i][j];
+            }
+        }
+    }
+
+    private void updateBiases(double[] biases, double[] gradients) {
+        for (int i = 0; i < biases.length; i++) {
+            biases[i] += gradients[i];
         }
     }
 }
