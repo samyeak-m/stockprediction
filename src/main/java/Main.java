@@ -1,9 +1,8 @@
-
 import database.DatabaseHelper;
-import lstm.DataPreprocessor;
+import util.DataPreprocessor;
 import lstm.LSTMNetwork;
 
-import java.io.IOException;
+import java.io.File;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -11,22 +10,16 @@ import java.util.List;
 import java.util.Scanner;
 
 public class Main {
-    private static final String MODEL_FILE_PATH = "lstm_model.ser";
+    private static final String MODEL_FILE_PATH = "lstm_model.ser".replace("/", File.separator);
 
-    public static void main(String[] args) throws SQLException, IOException, ClassNotFoundException {
+    public static void main(String[] args) throws SQLException {
         DatabaseHelper dbHelper = new DatabaseHelper();
-        LSTMNetwork lstm;
 
-        // Load or create the model
-        try {
-            lstm = LSTMNetwork.loadModel(MODEL_FILE_PATH);
-            System.out.println("Model loaded from file.");
-        } catch (IOException | ClassNotFoundException e) {
-            System.out.println("No existing model found. Creating a new one.");
+        LSTMNetwork lstm = LSTMNetwork.loadModel(MODEL_FILE_PATH);
+        if (lstm == null) {
             lstm = new LSTMNetwork(1, 50, 1); // Adjust sizes as necessary
         }
 
-        // Load data from all stock tables
         List<String> tableNames = dbHelper.getAllStockTableNames();
         List<double[]> allStockData = new ArrayList<>();
 
@@ -34,63 +27,44 @@ public class Main {
             allStockData.addAll(dbHelper.loadStockData(tableName));
         }
 
-        // Convert list to array for processing
         double[][] stockDataArray = allStockData.toArray(new double[0][]);
-
-        // Preprocess data
         double[][][] preprocessedData = DataPreprocessor.preprocessData(stockDataArray, 0.6);
         double[][] trainData = preprocessedData[0];
         double[][] testData = preprocessedData[1];
 
-        // Train the model
         trainModel(lstm, trainData, 1000, 0.001);
 
-        // Save the model
         lstm.saveModel(MODEL_FILE_PATH);
 
-        // Predict
-        Scanner scanner = new Scanner(System.in);
-        while (true) {
-            System.out.print("Enter the stock symbol to predict: ");
-            String stockSymbol = scanner.nextLine();
-            System.out.print("Enter the number of days for prediction: ");
-            int days = scanner.nextInt();
-            scanner.nextLine();  // Consume newline
+        try (Scanner scanner = new Scanner(System.in)) {
+            while (true) {
+                System.out.print("Enter the stock symbol to predict: ");
+                String stockSymbol = scanner.nextLine();
+                System.out.print("Enter the number of days for prediction: ");
+                int days = scanner.nextInt();
+                scanner.nextLine();  // Consume newline
 
-            predictAndSave(dbHelper, lstm, stockSymbol, days);
+                predictAndSave(dbHelper, lstm, stockSymbol, days);
 
-            System.out.print("Do you want to predict for another stock? (yes/no): ");
-            String response = scanner.nextLine();
-            if (!response.equalsIgnoreCase("yes")) {
-                break;
+                System.out.print("Do you want to predict for another stock? (yes/no): ");
+                String response = scanner.nextLine();
+                if (!response.equalsIgnoreCase("yes")) {
+                    break;
+                }
             }
         }
-
-        scanner.close();
     }
 
     private static void trainModel(LSTMNetwork lstm, double[][] data, int epochs, double learningRate) {
         for (int epoch = 0; epoch < epochs; epoch++) {
-            double[] hiddenState = new double[lstm.getHiddenSize()];
-            double[] cellState = new double[lstm.getHiddenSize()];
-
             for (double[] point : data) {
                 double[] input = new double[]{point[1]};
                 double[] target = new double[]{point[1]}; // Assuming we're using the closing price as the target
-                double[] output = lstm.forward(input, hiddenState, cellState);
 
-                // Compute loss (mean squared error)
-                double loss = 0;
-                for (int i = 0; i < output.length; i++) {
-                    loss += Math.pow(output[i] - target[i], 2);
-                }
-                loss /= output.length;
-
-                // Backpropagation and weights update (simplified)
-                // Implement proper backpropagation and weights update logic here
-
-                System.out.println("Epoch " + epoch + ", Loss: " + loss);
+                lstm.forward(input, lstm.getHiddenState(), lstm.getCellState());
+                lstm.backpropagate(input, target, learningRate);
             }
+            System.out.println("Epoch " + epoch + " completed.");
         }
     }
 

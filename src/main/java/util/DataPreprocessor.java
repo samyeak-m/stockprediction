@@ -1,4 +1,4 @@
-package lstm;
+package util;
 
 import java.util.Arrays;
 
