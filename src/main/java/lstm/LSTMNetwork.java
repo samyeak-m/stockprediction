@@ -28,16 +28,6 @@ public class LSTMNetwork implements Serializable {
     private double[] ot;
     private double[] ct_hat;
 
-    private double[] dWf;
-    private double[] dWi;
-    private double[] dWo;
-    private double[] dWc;
-    private double[] dWy;
-    private double[] dbf;
-    private double[] dbi;
-    private double[] dbo;
-    private double[] dbc;
-    private double[] dby;
 
     public LSTMNetwork(int inputSize, int hiddenSize, int outputSize) {
         this.inputSize = inputSize;
@@ -91,6 +81,13 @@ public class LSTMNetwork implements Serializable {
     }
 
     public double[] forward(double[] input, double[] hiddenState, double[] cellState) {
+        if (input.length != inputSize) {
+            throw new IllegalArgumentException("Input size must match the network input size");
+        }
+        if (hiddenState.length != hiddenSize || cellState.length != hiddenSize) {
+            throw new IllegalArgumentException("Hidden state and cell state sizes must match the network hidden size");
+        }
+
         double[] combined = new double[input.length + hiddenState.length];
         System.arraycopy(input, 0, combined, 0, input.length);
         System.arraycopy(hiddenState, 0, combined, input.length, hiddenState.length);
@@ -107,62 +104,18 @@ public class LSTMNetwork implements Serializable {
 
         double[] newHiddenState = new double[hiddenState.length];
         for (int i = 0; i < hiddenState.length; i++) {
-            newHiddenState[i] = ot[i] * tanh(newCellState[i]);
+            newHiddenState[i] = ot[i] * Math.tanh(newCellState[i]);
         }
 
         double[] output = add(matVecMul(Wy, newHiddenState), by);
 
-        System.arraycopy(newHiddenState, 0, this.hiddenState, 0, hiddenSize);
-        System.arraycopy(newCellState, 0, this.cellState, 0, hiddenSize);
+        System.arraycopy(newCellState, 0, cellState, 0, cellState.length);
+        System.arraycopy(newHiddenState, 0, hiddenState, 0, hiddenState.length);
 
         return output;
     }
 
-    private double[] matVecMul(double[][] matrix, double[] vector) {
-        double[] result = new double[matrix.length];
-        for (int i = 0; i < matrix.length; i++) {
-            result[i] = 0;
-            for (int j = 0; j < vector.length; j++) {
-                result[i] += matrix[i][j] * vector[j];
-            }
-        }
-        return result;
-    }
-
-    private double[] add(double[] a, double[] b) {
-        double[] result = new double[a.length];
-        for (int i = 0; i < a.length; i++) {
-            result[i] = a[i] + b[i];
-        }
-        return result;
-    }
-
-    private double[] sigmoid(double[] x) {
-        double[] result = new double[x.length];
-        for (int i = 0; i < x.length; i++) {
-            result[i] = 1.0 / (1.0 + Math.exp(-x[i]));
-        }
-        return result;
-    }
-
-    private double sigmoid(double x) {
-        return 1.0 / (1.0 + Math.exp(-x));
-    }
-
-    private double[] tanh(double[] x) {
-        double[] result = new double[x.length];
-        for (int i = 0; i < x.length; i++) {
-            result[i] = Math.tanh(x[i]);
-        }
-        return result;
-    }
-
-    private double tanh(double x) {
-        return Math.tanh(x);
-    }
-
     public void backpropagate(double[] input, double[] target, double learningRate) {
-        // Forward pass
         double[] combined = new double[input.length + hiddenState.length];
         System.arraycopy(input, 0, combined, 0, input.length);
         System.arraycopy(hiddenState, 0, combined, input.length, hiddenState.length);
@@ -179,18 +132,16 @@ public class LSTMNetwork implements Serializable {
 
         double[] newHiddenState = new double[hiddenState.length];
         for (int i = 0; i < hiddenState.length; i++) {
-            newHiddenState[i] = ot[i] * tanh(newCellState[i]);
+            newHiddenState[i] = ot[i] * Math.tanh(newCellState[i]);
         }
 
         double[] output = add(matVecMul(Wy, newHiddenState), by);
 
-        // Loss derivative
         double[] dOutput = new double[output.length];
         for (int i = 0; i < output.length; i++) {
             dOutput[i] = output[i] - target[i];
         }
 
-        // Gradients for output layer
         double[][] dWy = new double[Wy.length][Wy[0].length];
         double[] dby = new double[by.length];
         for (int i = 0; i < Wy.length; i++) {
@@ -200,23 +151,20 @@ public class LSTMNetwork implements Serializable {
             dby[i] = dOutput[i];
         }
 
-        // Gradients for hidden state
         double[] dHiddenState = new double[hiddenSize];
         for (int i = 0; i < hiddenSize; i++) {
             for (int j = 0; j < outputSize; j++) {
                 dHiddenState[i] += dOutput[j] * Wy[j][i];
             }
-            dHiddenState[i] *= ot[i] * (1 - tanh(newCellState[i]) * tanh(newCellState[i]));
+            dHiddenState[i] *= ot[i] * (1 - Math.tanh(newCellState[i]) * Math.tanh(newCellState[i]));
         }
 
-        // Gradients for cell state
         double[] dCellState = new double[hiddenSize];
         for (int i = 0; i < hiddenSize; i++) {
-            dCellState[i] = dHiddenState[i] * ot[i] * (1 - tanh(newCellState[i]) * tanh(newCellState[i]));
+            dCellState[i] = dHiddenState[i] * ot[i] * (1 - Math.tanh(newCellState[i]) * Math.tanh(newCellState[i]));
             dCellState[i] += newCellState[i] * (1 - newCellState[i]);
         }
 
-        // Gradients for forget gate
         double[][] dWf = new double[Wf.length][Wf[0].length];
         double[] dbf = new double[bf.length];
         for (int i = 0; i < Wf.length; i++) {
@@ -226,7 +174,6 @@ public class LSTMNetwork implements Serializable {
             dbf[i] = dCellState[i] * cellState[i] * ft[i] * (1 - ft[i]);
         }
 
-        // Gradients for input gate
         double[][] dWi = new double[Wi.length][Wi[0].length];
         double[] dbi = new double[bi.length];
         for (int i = 0; i < Wi.length; i++) {
@@ -246,17 +193,15 @@ public class LSTMNetwork implements Serializable {
             dbc[i] = dCellState[i] * it[i] * (1 - ct_hat[i] * ct_hat[i]);
         }
 
-        // Gradients for output gate
         double[][] dWo = new double[Wo.length][Wo[0].length];
         double[] dbo = new double[bo.length];
         for (int i = 0; i < Wo.length; i++) {
             for (int j = 0; j < Wo[0].length; j++) {
-                dWo[i][j] = dHiddenState[i] * tanh(newCellState[i]) * ot[i] * (1 - ot[i]) * combined[j];
+                dWo[i][j] = dHiddenState[i] * Math.tanh(newCellState[i]) * ot[i] * (1 - ot[i]) * combined[j];
             }
-            dbo[i] = dHiddenState[i] * tanh(newCellState[i]) * ot[i] * (1 - ot[i]);
+            dbo[i] = dHiddenState[i] * Math.tanh(newCellState[i]) * ot[i] * (1 - ot[i]);
         }
 
-        // Update weights and biases
         for (int i = 0; i < Wf.length; i++) {
             for (int j = 0; j < Wf[0].length; j++) {
                 Wf[i][j] -= learningRate * dWf[i][j];
@@ -278,20 +223,75 @@ public class LSTMNetwork implements Serializable {
         }
     }
 
-    public void saveModel(String filePath) {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
+    private double[] add(double[] a, double[] b) {
+        double[] result = new double[a.length];
+        for (int i = 0; i < a.length; i++) {
+            result[i] = a[i] + b[i];
+        }
+        return result;
+    }
+
+    private double[][] add(double[][] a, double[][] b) {
+        double[][] result = new double[a.length][a[0].length];
+        for (int i = 0; i < a.length; i++) {
+            for (int j = 0; j < a[i].length; j++) {
+                result[i][j] = a[i][j] + b[i][j];
+            }
+        }
+        return result;
+    }
+
+    private double[] matVecMul(double[][] matrix, double[] vector) {
+        if (matrix[0].length != vector.length) {
+            throw new IllegalArgumentException("Matrix column count must match vector length");
+        }
+        double[] result = new double[matrix.length];
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[i].length; j++) {
+                result[i] += matrix[i][j] * vector[j];
+            }
+        }
+        return result;
+    }
+
+    private double[] sigmoid(double[] x) {
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; i++) {
+            result[i] = 1.0 / (1.0 + Math.exp(-x[i]));
+        }
+        return result;
+    }
+
+    private double[] tanh(double[] x) {
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; i++) {
+            result[i] = Math.tanh(x[i]);
+        }
+        return result;
+    }
+
+    private double tanh(double x) {
+        return Math.tanh(x);
+    }
+
+    public static LSTMNetwork loadModel(String modelFilePath) {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(modelFilePath))) {
+            return (LSTMNetwork) ois.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            return null;
+        }
+    }
+
+    public void saveModel(String modelFilePath) {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(modelFilePath))) {
             oos.writeObject(this);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static LSTMNetwork loadModel(String filePath) {
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
-            return (LSTMNetwork) ois.readObject();
-        } catch (IOException | ClassNotFoundException e) {
-            return null;
-        }
+    public int getHiddenSize() {
+        return hiddenSize;
     }
 
     public double[] getHiddenState() {
@@ -300,10 +300,6 @@ public class LSTMNetwork implements Serializable {
 
     public double[] getCellState() {
         return cellState;
-    }
-
-    public int getHiddenSize() {
-        return hiddenSize;
     }
 
     public double[][] getWy() {
