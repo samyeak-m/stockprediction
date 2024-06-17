@@ -16,6 +16,11 @@ public class DatabaseHelper {
     private final String username;
     private final String password;
 
+    static String RESET = "\u001B[0m";
+    static String GREEN = "\u001B[32m";
+    static String BLUE = "\u001B[34m";
+    static String YELLOW = "\u001B[33m";
+
     public DatabaseHelper() {
         Properties properties = PropertyLoader.loadProperties("application.properties");
         this.url = properties.getProperty("db.url");
@@ -24,7 +29,7 @@ public class DatabaseHelper {
     }
 
     public Connection connect() throws SQLException {
-        System.out.println("Connecting to the database...");
+        LOGGER.log(Level.INFO,"Connecting to the database...");
         return DriverManager.getConnection(url, username, password);
     }
 
