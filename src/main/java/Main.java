@@ -41,7 +41,7 @@ public class Main {
 
         LSTMNetwork lstm = LSTMNetwork.loadModel(MODEL_FILE_PATH);
         if (lstm == null) {
-            lstm = new LSTMNetwork(6, 3650, 1);
+            lstm = new LSTMNetwork(8, 3650, 1);
         }
 
         List<String> tableNames = dbHelper.getAllStockTableNames();
@@ -53,7 +53,9 @@ public class Main {
 
         double[][] stockDataArray = allStockData.toArray(new double[0][]);
 
-        double[][][] preprocessedData = DataPreprocessor.preprocessData(stockDataArray, 0.6);
+        double[][] extendedData = DataPreprocessor.addFeatures(stockDataArray);
+
+        double[][][] preprocessedData = DataPreprocessor.preprocessData(extendedData, 0.6);
         double[][] trainData = preprocessedData[0];
         double[][] testData = preprocessedData[1];
 
@@ -64,22 +66,20 @@ public class Main {
 
         double accuracy = testModel(lstm, testData);
         while (accuracy < 0.99) {
-            LOGGER.log(Level.INFO, GREEN + "Accuracy below 90%, retraining model..." + RESET);
-            lstm = new LSTMNetwork(7, 365, 1);
-            trainModel(lstm, trainData, 1000, 0.01);
+            LOGGER.log(Level.INFO, GREEN + "Accuracy below 99%, retraining model..." + RESET);
+            lstm = new LSTMNetwork(8, 3650, 1);
+            trainModel(lstm, trainData, 10000, 0.001);
             accuracy = testModel(lstm, testData);
         }
 
         lstm.saveModel(MODEL_FILE_PATH);
 
-        // Create directories for saving charts
-        String accuracyChartDir = "charts/accuracy";
-        String predictionChartDir = "charts/predictions";
+        String accuracyChartDir = "charts" + File.separator + "accuracy";
+        String predictionChartDir = "charts" + File.separator + "predictions";
         createDirectory(accuracyChartDir);
         createDirectory(predictionChartDir);
 
-        // Save the accuracy chart
-        ChartUtils.saveAccuracyChart("Model Accuracy", epochList, accuracyList, accuracyChartDir + "/model_accuracy.png");
+        ChartUtils.saveAccuracyChart("Model Accuracy", epochList, accuracyList, accuracyChartDir + File.separator + "model_accuracy.png");
 
         try (Scanner scanner = new Scanner(System.in)) {
             while (true) {
@@ -108,13 +108,12 @@ public class Main {
                 for (double[] point : trainData) {
                     double[] input = new double[point.length - 1];
                     System.arraycopy(point, 1, input, 0, point.length - 1);
-                    double[] target = new double[]{point[1]};
-                    LOGGER.log(Level.INFO, YELLOW + "Input: " + Arrays.toString(input) + ", Target: " + BLUE + Arrays.toString(target) + RESET);
+                    double[] target = new double[]{point[4]};
+//                    LOGGER.log(Level.INFO, YELLOW + "Input: " + Arrays.toString(input) + ", Target: " + BLUE + Arrays.toString(target) + RESET);
 
                     lstm.forward(input, lstm.getHiddenState(), lstm.getCellState());
                     lstm.backpropagate(input, target, learningRate);
-                    LOGGER.log(Level.INFO, YELLOW + "Forward and Backpropagation completed for input: " + BLUE + Arrays.toString(input) + RESET);
-
+//                    LOGGER.log(Level.INFO, YELLOW + "Forward and Backpropagation completed for input: " + BLUE + Arrays.toString(input) + RESET);
                 }
                 Instant epochEnd = Instant.now();
                 Duration epochDuration = Duration.between(epochStart, epochEnd);
@@ -144,7 +143,7 @@ public class Main {
             System.arraycopy(point, 1, input, 0, point.length - 1);
             double[] output = lstm.forward(input, lstm.getHiddenState(), lstm.getCellState());
             double prediction = output[0];
-            double actual = point[4];
+            double actual = point[1];
 
             if (Math.abs(prediction - actual) / actual < 0.1) {
                 correctPredictions++;
@@ -208,11 +207,11 @@ public class Main {
         }
 
         // Create directory for specific stock if it does not exist
-        String stockPredictionDir = predictionChartDir + "/" + stockSymbol;
+        String stockPredictionDir = predictionChartDir + File.separator + stockSymbol;
         createDirectory(stockPredictionDir);
 
         // Save the prediction chart
-        String predictionChartFilePath = stockPredictionDir + "/prediction_" + stockSymbol + ".png";
+        String predictionChartFilePath = stockPredictionDir + File.separator + "prediction_" + stockSymbol + ".png";
         ChartUtils.savePredictionChart("Stock Price Prediction - " + stockSymbol, dates, actualPrices, predictedPrices, predictionChartFilePath);
     }
 
