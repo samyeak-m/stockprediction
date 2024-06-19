@@ -27,7 +27,7 @@ public class DataPreprocessor {
             if (i >= 14) {
                 double gain = 0, loss = 0;
                 for (int j = i - 13; j <= i; j++) {
-                    double change = data[j][4] - data[j - 1][4];
+                    double change = data[j][1] - data[j - 1][1];
                     if (change > 0) {
                         gain += change;
                     } else {

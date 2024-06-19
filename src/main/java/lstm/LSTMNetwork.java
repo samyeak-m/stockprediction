@@ -22,7 +22,6 @@ public class LSTMNetwork implements Serializable {
     private double[] hiddenState;
     private double[] cellState;
 
-    // Intermediate variables for backpropagation
     private double[] ft;
     private double[] it;
     private double[] ot;
@@ -231,16 +230,6 @@ public class LSTMNetwork implements Serializable {
         return result;
     }
 
-    private double[][] add(double[][] a, double[][] b) {
-        double[][] result = new double[a.length][a[0].length];
-        for (int i = 0; i < a.length; i++) {
-            for (int j = 0; j < a[i].length; j++) {
-                result[i][j] = a[i][j] + b[i][j];
-            }
-        }
-        return result;
-    }
-
     private double[] matVecMul(double[][] matrix, double[] vector) {
         if (matrix[0].length != vector.length) {
             throw new IllegalArgumentException("Matrix column count must match vector length");
@@ -268,10 +257,6 @@ public class LSTMNetwork implements Serializable {
             result[i] = Math.tanh(x[i]);
         }
         return result;
-    }
-
-    private double tanh(double x) {
-        return Math.tanh(x);
     }
 
     public static LSTMNetwork loadModel(String modelFilePath) {

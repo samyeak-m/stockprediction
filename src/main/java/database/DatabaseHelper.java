@@ -70,7 +70,7 @@ public class DatabaseHelper {
 
                 double dateAsDouble = date.getTime();
 
-                stockData.add(new double[]{dateAsDouble, close, high, low, open, volume, turnover});
+                stockData.add(new double[]{dateAsDouble, close});
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error loading stock data for table " + tableName, e);

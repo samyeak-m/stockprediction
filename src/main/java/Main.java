@@ -41,7 +41,7 @@ public class Main {
 
         LSTMNetwork lstm = LSTMNetwork.loadModel(MODEL_FILE_PATH);
         if (lstm == null) {
-            lstm = new LSTMNetwork(8, 3650, 1);
+            lstm = new LSTMNetwork(3, 141, 1);
         }
 
         List<String> tableNames = dbHelper.getAllStockTableNames();
@@ -67,7 +67,7 @@ public class Main {
         double accuracy = testModel(lstm, testData);
         while (accuracy < 0.99) {
             LOGGER.log(Level.INFO, GREEN + "Accuracy below 99%, retraining model..." + RESET);
-            lstm = new LSTMNetwork(8, 3650, 1);
+            lstm = new LSTMNetwork(3, 365, 1);
             trainModel(lstm, trainData, 10000, 0.001);
             accuracy = testModel(lstm, testData);
         }
@@ -108,7 +108,10 @@ public class Main {
                 for (double[] point : trainData) {
                     double[] input = new double[point.length - 1];
                     System.arraycopy(point, 1, input, 0, point.length - 1);
-                    double[] target = new double[]{point[4]};
+                    double[] target = new double[]{point[1]};
+
+//                    System.out.println("close : "+Arrays.toString(target));
+//                    System.out.println("points : "+Arrays.toString(point));
 //                    LOGGER.log(Level.INFO, YELLOW + "Input: " + Arrays.toString(input) + ", Target: " + BLUE + Arrays.toString(target) + RESET);
 
                     lstm.forward(input, lstm.getHiddenState(), lstm.getCellState());
@@ -144,6 +147,9 @@ public class Main {
             double[] output = lstm.forward(input, lstm.getHiddenState(), lstm.getCellState());
             double prediction = output[0];
             double actual = point[1];
+
+            System.out.println("close actual: "+actual);
+            System.out.println("close predict: "+prediction);
 
             if (Math.abs(prediction - actual) / actual < 0.1) {
                 correctPredictions++;
@@ -187,22 +193,22 @@ public class Main {
 
             LocalDate today = LocalDate.now();
             LocalDate predictionDate = today.plusDays(i + 1);
-            String predict = (prediction - input[4]) / input[4] > 0.1 ? "up" : (prediction - input[4]) / input[4] < -0.1 ? "down" : "neutral";
-            double priceChange = prediction - input[4];
-            String pointChangeStr = String.format("%.2f", (priceChange / input[4]) * 100);
+            String predict = (prediction - input[1]) / input[1] > 0.1 ? "up" : (prediction - input[1]) / input[1] < -0.1 ? "down" : "neutral";
+            double priceChange = prediction - input[1];
+            String pointChangeStr = String.format("%.2f", (priceChange / input[1]) * 100);
 
             if (Double.parseDouble(pointChangeStr) > 10) {
                 pointChangeStr = "10";
-                prediction = input[4] * 1.10;
+                prediction = input[1] * 1.10;
             } else if (Double.parseDouble(pointChangeStr) < -10) {
                 pointChangeStr = "-10";
-                prediction = input[4] * 0.90;
+                prediction = input[1] * 0.90;
             }
 
             LOGGER.log(Level.INFO, "Predicted stock price for " + predictionDate + " is " + prediction + " (change: " + pointChangeStr + "%, " + predict + ")");
 
             dates.add(predictionDate);
-            actualPrices.add(input[4]);
+            actualPrices.add(input[1]);
             predictedPrices.add(prediction);
         }
 
