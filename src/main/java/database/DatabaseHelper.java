@@ -29,7 +29,7 @@ public class DatabaseHelper {
     }
 
     public Connection connect() throws SQLException {
-        LOGGER.log(Level.INFO,"Connecting to the database...");
+//        LOGGER.log(Level.INFO,"Connecting to the database...");
         return DriverManager.getConnection(url, username, password);
     }
 
@@ -48,7 +48,7 @@ public class DatabaseHelper {
             LOGGER.log(Level.SEVERE, "Error fetching stock table names", e);
             throw e;
         }
-        LOGGER.log(Level.INFO, "Fetched {0} stock table names", tableNames.size());
+//        LOGGER.log(Level.INFO, "Fetched {0} stock table names", tableNames.size());
         return tableNames;
     }
 
@@ -70,13 +70,13 @@ public class DatabaseHelper {
 
                 double dateAsDouble = date.getTime();
 
-                stockData.add(new double[]{dateAsDouble, close});
+                stockData.add(new double[]{dateAsDouble, close, high, low, open, volume, turnover});
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error loading stock data for table " + tableName, e);
             throw e;
         }
-        LOGGER.log(Level.INFO, "Loaded {0} rows of stock data from table {1}", new Object[]{stockData.size(), tableName});
+//        LOGGER.log(Level.INFO, "Loaded {0} rows of stock data from table {1}", new Object[]{stockData.size(), tableName});
         return stockData;
     }
 

@@ -27,6 +27,7 @@ public class LSTMNetwork implements Serializable {
     private double[] ot;
     private double[] ct_hat;
 
+    private final double clipThreshold = 5.0;
 
     public LSTMNetwork(int inputSize, int hiddenSize, int outputSize) {
         this.inputSize = inputSize;
@@ -114,6 +115,28 @@ public class LSTMNetwork implements Serializable {
         return output;
     }
 
+    public void clipGradients(double threshold) {
+        for (int i = 0; i < hiddenSize; i++) {
+            for (int j = 0; j < inputSize + hiddenSize; j++) {
+                Wf[i][j] = Math.min(Wf[i][j], threshold);
+                Wi[i][j] = Math.min(Wi[i][j], threshold);
+                Wo[i][j] = Math.min(Wo[i][j], threshold);
+                Wc[i][j] = Math.min(Wc[i][j], threshold);
+            }
+            bf[i] = Math.min(bf[i], threshold);
+            bi[i] = Math.min(bi[i], threshold);
+            bo[i] = Math.min(bo[i], threshold);
+            bc[i] = Math.min(bc[i], threshold);
+        }
+
+        for (int i = 0; i < outputSize; i++) {
+            for (int j = 0; j < hiddenSize; j++) {
+                Wy[i][j] = Math.min(Wy[i][j], threshold);
+            }
+            by[i] = Math.min(by[i], threshold);
+        }
+    }
+
     public void backpropagate(double[] input, double[] target, double learningRate) {
         double[] combined = new double[input.length + hiddenState.length];
         System.arraycopy(input, 0, combined, 0, input.length);
@@ -177,12 +200,20 @@ public class LSTMNetwork implements Serializable {
         double[] dbi = new double[bi.length];
         for (int i = 0; i < Wi.length; i++) {
             for (int j = 0; j < Wi[0].length; j++) {
-                dWi[i][j] = dCellState[i] * ct_hat[i] * it[i] * (1 - it[i]) * combined[j];
+                dWi[i][j] = dCellState[i] * it[i] * (1 - it[i]) * ct_hat[i] * combined[j];
             }
-            dbi[i] = dCellState[i] * ct_hat[i] * it[i] * (1 - it[i]);
+            dbi[i] = dCellState[i] * it[i] * (1 - it[i]) * ct_hat[i];
         }
 
-        // Gradients for cell state
+        double[][] dWo = new double[Wo.length][Wo[0].length];
+        double[] dbo = new double[bo.length];
+        for (int i = 0; i < Wo.length; i++) {
+            for (int j = 0; j < Wo[0].length; j++) {
+                dWo[i][j] = dHiddenState[i] * ot[i] * (1 - ot[i]) * combined[j];
+            }
+            dbo[i] = dHiddenState[i] * ot[i] * (1 - ot[i]);
+        }
+
         double[][] dWc = new double[Wc.length][Wc[0].length];
         double[] dbc = new double[bc.length];
         for (int i = 0; i < Wc.length; i++) {
@@ -192,55 +223,42 @@ public class LSTMNetwork implements Serializable {
             dbc[i] = dCellState[i] * it[i] * (1 - ct_hat[i] * ct_hat[i]);
         }
 
-        double[][] dWo = new double[Wo.length][Wo[0].length];
-        double[] dbo = new double[bo.length];
-        for (int i = 0; i < Wo.length; i++) {
-            for (int j = 0; j < Wo[0].length; j++) {
-                dWo[i][j] = dHiddenState[i] * Math.tanh(newCellState[i]) * ot[i] * (1 - ot[i]) * combined[j];
-            }
-            dbo[i] = dHiddenState[i] * Math.tanh(newCellState[i]) * ot[i] * (1 - ot[i]);
-        }
-
-        for (int i = 0; i < Wf.length; i++) {
-            for (int j = 0; j < Wf[0].length; j++) {
-                Wf[i][j] -= learningRate * dWf[i][j];
-                Wi[i][j] -= learningRate * dWi[i][j];
-                Wo[i][j] -= learningRate * dWo[i][j];
-                Wc[i][j] -= learningRate * dWc[i][j];
-            }
-            bf[i] -= learningRate * dbf[i];
-            bi[i] -= learningRate * dbi[i];
-            bo[i] -= learningRate * dbo[i];
-            bc[i] -= learningRate * dbc[i];
-        }
-
         for (int i = 0; i < Wy.length; i++) {
             for (int j = 0; j < Wy[0].length; j++) {
                 Wy[i][j] -= learningRate * dWy[i][j];
             }
             by[i] -= learningRate * dby[i];
         }
-    }
 
-    private double[] add(double[] a, double[] b) {
-        double[] result = new double[a.length];
-        for (int i = 0; i < a.length; i++) {
-            result[i] = a[i] + b[i];
-        }
-        return result;
-    }
-
-    private double[] matVecMul(double[][] matrix, double[] vector) {
-        if (matrix[0].length != vector.length) {
-            throw new IllegalArgumentException("Matrix column count must match vector length");
-        }
-        double[] result = new double[matrix.length];
-        for (int i = 0; i < matrix.length; i++) {
-            for (int j = 0; j < matrix[i].length; j++) {
-                result[i] += matrix[i][j] * vector[j];
+        for (int i = 0; i < Wf.length; i++) {
+            for (int j = 0; j < Wf[0].length; j++) {
+                Wf[i][j] -= learningRate * dWf[i][j];
             }
+            bf[i] -= learningRate * dbf[i];
         }
-        return result;
+
+        for (int i = 0; i < Wi.length; i++) {
+            for (int j = 0; j < Wi[0].length; j++) {
+                Wi[i][j] -= learningRate * dWi[i][j];
+            }
+            bi[i] -= learningRate * dbi[i];
+        }
+
+        for (int i = 0; i < Wo.length; i++) {
+            for (int j = 0; j < Wo[0].length; j++) {
+                Wo[i][j] -= learningRate * dWo[i][j];
+            }
+            bo[i] -= learningRate * dbo[i];
+        }
+
+        for (int i = 0; i < Wc.length; i++) {
+            for (int j = 0; j < Wc[0].length; j++) {
+                Wc[i][j] -= learningRate * dWc[i][j];
+            }
+            bc[i] -= learningRate * dbc[i];
+        }
+
+        clipGradients(clipThreshold);
     }
 
     private double[] sigmoid(double[] x) {
@@ -259,6 +277,43 @@ public class LSTMNetwork implements Serializable {
         return result;
     }
 
+    private double[] add(double[] a, double[] b) {
+        double[] result = new double[a.length];
+        for (int i = 0; i < a.length; i++) {
+            result[i] = a[i] + b[i];
+        }
+        return result;
+    }
+
+    private double[][] add(double[][] a, double[][] b) {
+        double[][] result = new double[a.length][a[0].length];
+        for (int i = 0; i < a.length; i++) {
+            for (int j = 0; j < a[0].length; j++) {
+                result[i][j] = a[i][j] + b[i][j];
+            }
+        }
+        return result;
+    }
+
+    private double[] matVecMul(double[][] a, double[] x) {
+        double[] result = new double[a.length];
+        for (int i = 0; i < a.length; i++) {
+            result[i] = 0.0;
+            for (int j = 0; j < x.length; j++) {
+                result[i] += a[i][j] * x[j];
+            }
+        }
+        return result;
+    }
+
+    // Save the model to a file
+    public void saveModel(String filePath) throws IOException {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
+            oos.writeObject(this);
+        }
+    }
+
+    // Load the model from a file
     public static LSTMNetwork loadModel(String modelFilePath) {
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(modelFilePath))) {
             return (LSTMNetwork) ois.readObject();
@@ -267,30 +322,27 @@ public class LSTMNetwork implements Serializable {
         }
     }
 
-    public void saveModel(String modelFilePath) {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(modelFilePath))) {
-            oos.writeObject(this);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public int getHiddenSize() {
-        return hiddenSize;
-    }
-
-    public double[] getHiddenState() {
-        return hiddenState;
-    }
-
+    // Get the current cell state
     public double[] getCellState() {
         return cellState;
     }
 
+    // Get the current hidden state
+    public double[] getHiddenState() {
+        return hiddenState;
+    }
+
+    // Get the hidden size
+    public int getHiddenSize() {
+        return hiddenSize;
+    }
+
+    // Get the output weights
     public double[][] getWy() {
         return Wy;
     }
 
+    // Get the output biases
     public double[] getBy() {
         return by;
     }
