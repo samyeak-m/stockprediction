@@ -16,11 +16,6 @@ public class DatabaseHelper {
     private final String username;
     private final String password;
 
-    static String RESET = "\u001B[0m";
-    static String GREEN = "\u001B[32m";
-    static String BLUE = "\u001B[34m";
-    static String YELLOW = "\u001B[33m";
-
     public DatabaseHelper() {
         Properties properties = PropertyLoader.loadProperties("application.properties");
         this.url = properties.getProperty("db.url");

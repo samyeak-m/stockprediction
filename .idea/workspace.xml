@@ -10,12 +10,28 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8a665f72-76be-45db-8f3b-b47e13b27452" name="Changes" comment="UPDATE : model training and testing of result with retesting until accurate prediction">
-      <change afterPath="$PROJECT_DIR$/src/main/java/util/CustomChartUtils.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/charts/accuracy/model_accuracy.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/charts/accuracy/model_accuracyv1.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/charts/predictions/daily_data_adbl_predictionsv1.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/charts/predictions/daily_data_nimb_predictionsv1.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/charts/predictions/daily_data_ntc_predictions.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/charts/predictions/daily_data_ntc_predictionsv1.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/charts/predictions/daily_data_sindu_predictionsv1.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/charts/predictions/daily_data_unl_predictionsv1.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/charts/predictions/daily_data_wnlb_predictionsv1.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/chartsv3/accuracy/model_accuracy.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/chartsv3/predictions/daily_data_adbl_predictions.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/chartsv3/predictions/daily_data_nimb_predictions.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/chartsv3/predictions/daily_data_ntc_predictions.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lstm_modelv1.ser" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lstm_modelv3.ser" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/model/charts/accuracy/model_accuracyv1.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Main.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/database/DatabaseHelper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/database/DatabaseHelper.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/lstm/LSTMNetwork.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/lstm/LSTMNetwork.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/util/ChartUtils.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/lstm/LSTMTrainer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/lstm/LSTMTrainer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/util/CustomChartUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/util/CustomChartUtils.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/util/DataPreprocessor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/util/DataPreprocessor.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/util/TechnicalIndicators.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/util/TechnicalIndicators.java" afterDir="false" />
     </list>
@@ -200,7 +216,16 @@
       <workItem from="1718704078676" duration="37000" />
       <workItem from="1718704176912" duration="435000" />
       <workItem from="1718762024250" duration="10672000" />
-      <workItem from="1718781096357" duration="6284000" />
+      <workItem from="1718781096357" duration="9157000" />
+      <workItem from="1718850010207" duration="44000" />
+      <workItem from="1718850088831" duration="19000" />
+      <workItem from="1718850124085" duration="7960000" />
+      <workItem from="1718868250013" duration="6401000" />
+      <workItem from="1718875250870" duration="4405000" />
+      <workItem from="1718935488823" duration="46000" />
+      <workItem from="1718936052734" duration="1978000" />
+      <workItem from="1718940051753" duration="68000" />
+      <workItem from="1718943211246" duration="712000" />
     </task>
     <task id="LOCAL-00001" summary="CREATE : stock prediction usign lstm algorithm">
       <option name="closed" value="true" />
@@ -250,7 +275,15 @@
       <option name="project" value="LOCAL" />
       <updated>1718766036046</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="UPDATE : model training and testing of result with retesting until accurate prediction">
+      <option name="closed" value="true" />
+      <created>1718787629478</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1718787629478</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

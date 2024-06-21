@@ -1,5 +1,12 @@
 package lstm;
 
+import util.CustomChartUtils;
+import util.DataPreprocessor;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public class LSTMTrainer {
     private final LSTMNetwork network;
     private final double learningRate;
@@ -10,44 +17,70 @@ public class LSTMTrainer {
     }
 
     public void train(double[][] inputs, double[][] targets, int epochs) {
+        // Normalize the data
+        double[][] normalizedInputs = DataPreprocessor.normalize(inputs);
+        double[][] normalizedTargets = DataPreprocessor.normalize(targets);
+
+        // Split the data into training and testing sets
+        double[][][] inputSplits = DataPreprocessor.preprocessData(normalizedInputs, 0.6);
+        double[][][] targetSplits = DataPreprocessor.preprocessData(normalizedTargets, 0.6);
+
+        double[][] trainInputs = inputSplits[0];
+        double[][] testInputs = inputSplits[1];
+        double[][] trainTargets = targetSplits[0];
+        double[][] testTargets = targetSplits[1];
+
+        List<Double> trainingLoss = new ArrayList<>();
+        List<Double> validationLoss = new ArrayList<>();
+
         for (int epoch = 0; epoch < epochs; epoch++) {
-            for (int i = 0; i < inputs.length; i++) {
-                double[] input = inputs[i];
-                double[] target = targets[i];
+            double totalError = 0;
+
+            // Shuffle the training data
+            List<Integer> indices = new ArrayList<>();
+            for (int i = 0; i < trainInputs.length; i++) indices.add(i);
+            Collections.shuffle(indices);
+
+            for (int i : indices) {
+                double[] input = trainInputs[i];
+                double[] target = trainTargets[i];
+
+                // Reset state for each sequence
+                network.resetState();
+
+                // Forward pass
                 double[] hiddenState = new double[network.getHiddenSize()];
                 double[] cellState = new double[network.getHiddenSize()];
-
                 double[] output = network.forward(input, hiddenState, cellState);
                 double error = target[0] - output[0];
-                double gradient = error * learningRate;
+                totalError += error * error;
 
-                double[][] dWy = new double[network.getWy().length][network.getWy()[0].length];
-                double[] dby = new double[network.getBy().length];
-
-                for (int j = 0; j < dWy.length; j++) {
-                    for (int k = 0; k < dWy[j].length; k++) {
-                        dWy[j][k] = gradient * hiddenState[k];
-                    }
-                    dby[j] = gradient;
-                }
-
-                updateWeights(network.getWy(), dWy);
-                updateBiases(network.getBy(), dby);
+                // Backpropagation
+                network.backpropagate(input, target, learningRate);
             }
+
+            trainingLoss.add(totalError / trainInputs.length);
+            validationLoss.add(validate(testInputs, testTargets));
+            System.out.println("Epoch " + (epoch + 1) + " complete. Training Loss: " + totalError / trainInputs.length);
         }
+
+        CustomChartUtils.plotTrainingProgress(trainingLoss, validationLoss);
     }
 
-    private void updateWeights(double[][] weights, double[][] gradients) {
-        for (int i = 0; i < weights.length; i++) {
-            for (int j = 0; j < weights[i].length; j++) {
-                weights[i][j] += gradients[i][j];
-            }
-        }
-    }
+    private double validate(double[][] inputs, double[][] targets) {
+        double totalError = 0;
 
-    private void updateBiases(double[] biases, double[] gradients) {
-        for (int i = 0; i < biases.length; i++) {
-            biases[i] += gradients[i];
+        for (int i = 0; i < inputs.length; i++) {
+            double[] input = inputs[i];
+            double[] target = targets[i];
+            double[] hiddenState = new double[network.getHiddenSize()];
+            double[] cellState = new double[network.getHiddenSize()];
+
+            double[] output = network.forward(input, hiddenState, cellState);
+            double error = target[0] - output[0];
+            totalError += error * error;
         }
+
+        return totalError / inputs.length;
     }
 }

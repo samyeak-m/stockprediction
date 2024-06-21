@@ -80,12 +80,9 @@ public class LSTMNetwork implements Serializable {
         }
     }
 
-    public double[] forward(double[] input, double[] hiddenState, double[] cellState) {
+    public double[] forward(double[] input,double[] hiddenState,double[] cellState ) {
         if (input.length != inputSize) {
-            throw new IllegalArgumentException("Input size must match the network input size");
-        }
-        if (hiddenState.length != hiddenSize || cellState.length != hiddenSize) {
-            throw new IllegalArgumentException("Hidden state and cell state sizes must match the network hidden size");
+            throw new IllegalArgumentException("Input size must match the network input size" +input.length+ " : "+inputSize);
         }
 
         double[] combined = new double[input.length + hiddenState.length];
@@ -114,6 +111,7 @@ public class LSTMNetwork implements Serializable {
 
         return output;
     }
+
 
     public void clipGradients(double threshold) {
         for (int i = 0; i < hiddenSize; i++) {
@@ -200,18 +198,18 @@ public class LSTMNetwork implements Serializable {
         double[] dbi = new double[bi.length];
         for (int i = 0; i < Wi.length; i++) {
             for (int j = 0; j < Wi[0].length; j++) {
-                dWi[i][j] = dCellState[i] * it[i] * (1 - it[i]) * ct_hat[i] * combined[j];
+                dWi[i][j] = dCellState[i] * ct_hat[i] * it[i] * (1 - it[i]) * combined[j];
             }
-            dbi[i] = dCellState[i] * it[i] * (1 - it[i]) * ct_hat[i];
+            dbi[i] = dCellState[i] * ct_hat[i] * it[i] * (1 - it[i]);
         }
 
         double[][] dWo = new double[Wo.length][Wo[0].length];
         double[] dbo = new double[bo.length];
         for (int i = 0; i < Wo.length; i++) {
             for (int j = 0; j < Wo[0].length; j++) {
-                dWo[i][j] = dHiddenState[i] * ot[i] * (1 - ot[i]) * combined[j];
+                dWo[i][j] = dHiddenState[i] * newHiddenState[i] * ot[i] * (1 - ot[i]) * combined[j];
             }
-            dbo[i] = dHiddenState[i] * ot[i] * (1 - ot[i]);
+            dbo[i] = dHiddenState[i] * newHiddenState[i] * ot[i] * (1 - ot[i]);
         }
 
         double[][] dWc = new double[Wc.length][Wc[0].length];
@@ -223,6 +221,19 @@ public class LSTMNetwork implements Serializable {
             dbc[i] = dCellState[i] * it[i] * (1 - ct_hat[i] * ct_hat[i]);
         }
 
+        for (int i = 0; i < Wf.length; i++) {
+            for (int j = 0; j < Wf[0].length; j++) {
+                Wf[i][j] -= learningRate * dWf[i][j];
+                Wi[i][j] -= learningRate * dWi[i][j];
+                Wo[i][j] -= learningRate * dWo[i][j];
+                Wc[i][j] -= learningRate * dWc[i][j];
+            }
+            bf[i] -= learningRate * dbf[i];
+            bi[i] -= learningRate * dbi[i];
+            bo[i] -= learningRate * dbo[i];
+            bc[i] -= learningRate * dbc[i];
+        }
+
         for (int i = 0; i < Wy.length; i++) {
             for (int j = 0; j < Wy[0].length; j++) {
                 Wy[i][j] -= learningRate * dWy[i][j];
@@ -230,106 +241,71 @@ public class LSTMNetwork implements Serializable {
             by[i] -= learningRate * dby[i];
         }
 
-        for (int i = 0; i < Wf.length; i++) {
-            for (int j = 0; j < Wf[0].length; j++) {
-                Wf[i][j] -= learningRate * dWf[i][j];
-            }
-            bf[i] -= learningRate * dbf[i];
-        }
-
-        for (int i = 0; i < Wi.length; i++) {
-            for (int j = 0; j < Wi[0].length; j++) {
-                Wi[i][j] -= learningRate * dWi[i][j];
-            }
-            bi[i] -= learningRate * dbi[i];
-        }
-
-        for (int i = 0; i < Wo.length; i++) {
-            for (int j = 0; j < Wo[0].length; j++) {
-                Wo[i][j] -= learningRate * dWo[i][j];
-            }
-            bo[i] -= learningRate * dbo[i];
-        }
-
-        for (int i = 0; i < Wc.length; i++) {
-            for (int j = 0; j < Wc[0].length; j++) {
-                Wc[i][j] -= learningRate * dWc[i][j];
-            }
-            bc[i] -= learningRate * dbc[i];
-        }
-
         clipGradients(clipThreshold);
     }
 
-    private double[] sigmoid(double[] x) {
-        double[] result = new double[x.length];
-        for (int i = 0; i < x.length; i++) {
-            result[i] = 1.0 / (1.0 + Math.exp(-x[i]));
-        }
-        return result;
+    public void resetState() {
+        hiddenState = new double[hiddenSize];
+        cellState = new double[hiddenSize];
     }
 
-    private double[] tanh(double[] x) {
-        double[] result = new double[x.length];
-        for (int i = 0; i < x.length; i++) {
-            result[i] = Math.tanh(x[i]);
-        }
-        return result;
-    }
-
-    private double[] add(double[] a, double[] b) {
-        double[] result = new double[a.length];
-        for (int i = 0; i < a.length; i++) {
-            result[i] = a[i] + b[i];
-        }
-        return result;
-    }
-
-    private double[][] add(double[][] a, double[][] b) {
-        double[][] result = new double[a.length][a[0].length];
-        for (int i = 0; i < a.length; i++) {
-            for (int j = 0; j < a[0].length; j++) {
-                result[i][j] = a[i][j] + b[i][j];
+    private double[] matVecMul(double[][] matrix, double[] vector) {
+        double[] result = new double[matrix.length];
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < vector.length; j++) {
+                result[i] += matrix[i][j] * vector[j];
             }
         }
         return result;
     }
 
-    private double[] matVecMul(double[][] a, double[] x) {
-        double[] result = new double[a.length];
-        for (int i = 0; i < a.length; i++) {
-            result[i] = 0.0;
-            for (int j = 0; j < x.length; j++) {
-                result[i] += a[i][j] * x[j];
-            }
+    private double[] add(double[] vec1, double[] vec2) {
+        double[] result = new double[vec1.length];
+        for (int i = 0; i < vec1.length; i++) {
+            result[i] = vec1[i] + vec2[i];
         }
         return result;
     }
 
-    // Save the model to a file
-    public void saveModel(String filePath) throws IOException {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
-            oos.writeObject(this);
+    private double[] sigmoid(double[] vec) {
+        double[] result = new double[vec.length];
+        for (int i = 0; i < vec.length; i++) {
+            result[i] = 1.0 / (1.0 + Math.exp(-vec[i]));
         }
+        return result;
     }
 
-    // Load the model from a file
-    public static LSTMNetwork loadModel(String modelFilePath) {
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(modelFilePath))) {
-            return (LSTMNetwork) ois.readObject();
-        } catch (IOException | ClassNotFoundException e) {
-            return null;
+    private double[] tanh(double[] vec) {
+        double[] result = new double[vec.length];
+        for (int i = 0; i < vec.length; i++) {
+            result[i] = Math.tanh(vec[i]);
         }
+        return result;
     }
 
-    // Get the current cell state
+    public double[] getHiddenState() {
+        return hiddenState;
+    }
+
     public double[] getCellState() {
         return cellState;
     }
 
-    // Get the current hidden state
-    public double[] getHiddenState() {
-        return hiddenState;
+    public void saveModel(String filePath) {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
+            oos.writeObject(this);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static LSTMNetwork loadModel(String filePath) {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
+            return (LSTMNetwork) ois.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("\u001B[32m Creating Model....\u001B[0m");
+            return null;
+        }
     }
 
     // Get the hidden size

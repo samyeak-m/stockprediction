@@ -149,17 +149,20 @@ public class TechnicalIndicators {
     }
 
     public static double[][] calculate(double[][] stockData, int smaPeriod, int emaPeriod) {
-        int priceIndex = 1; // Assuming the price is at index 1
+        int priceIndex = 1;
+
         double[] prices = new double[stockData.length];
 
         for (int i = 0; i < stockData.length; i++) {
             prices[i] = stockData[i][priceIndex];
+
         }
 
         double[] sma = calculateSMA(prices, smaPeriod);
         double[] ema = calculateEMA(prices, emaPeriod);
 
         double[][] indicators = new double[stockData.length][2];
+
         for (int i = 0; i < stockData.length; i++) {
             indicators[i][0] = sma[i];
             indicators[i][1] = ema[i];
