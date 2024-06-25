@@ -17,7 +17,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Main {
-    static String version = "v3";
+    static String version = "v1";
 
     private static final String MODEL_FILE_PATH = "lstm_model"+version+".ser".replace("/", File.separator);
     private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
@@ -36,7 +36,7 @@ public class Main {
     private static final List<Integer> epochList = new ArrayList<>();
     private static final List<Double> accuracyList = new ArrayList<>();
 
-    public static void main(String[] args) throws SQLException, IOException {
+    public static void main(String[] args) throws SQLException, IOException, ClassNotFoundException {
         LOGGER.setLevel(Level.INFO);
         ConsoleHandler handler = new ConsoleHandler();
         handler.setLevel(Level.INFO);

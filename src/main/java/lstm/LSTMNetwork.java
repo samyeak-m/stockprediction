@@ -1,294 +1,287 @@
 package lstm;
 
 import java.io.*;
-import java.util.Random;
+import java.util.Arrays;
 
 public class LSTMNetwork implements Serializable {
-    private final int inputSize;
-    private final int hiddenSize;
-    private final int outputSize;
-
-    private final double[][] Wf;
-    private final double[][] Wi;
-    private final double[][] Wo;
-    private final double[][] Wc;
-    private final double[][] Wy;
-    private final double[] bf;
-    private final double[] bi;
-    private final double[] bo;
-    private final double[] bc;
-    private final double[] by;
+    private int inputSize;
+    private int hiddenSize;
+    private int outputSize;
+    private double[][] weightsInputGate;
+    private double[][] weightsForgetGate;
+    private double[][] weightsOutputGate;
+    private double[][] weightsCellGate;
+    private double[][] weightsHiddenInputGate;
+    private double[][] weightsHiddenForgetGate;
+    private double[][] weightsHiddenOutputGate;
+    private double[][] weightsHiddenCellGate;
+    private double[][] weightsOutput;
+    private double[] biasInputGate;
+    private double[] biasForgetGate;
+    private double[] biasOutputGate;
+    private double[] biasCellGate;
+    private double[] biasOutput;
 
     private double[] hiddenState;
     private double[] cellState;
 
-    private double[] ft;
-    private double[] it;
-    private double[] ot;
-    private double[] ct_hat;
-
-    private final double clipThreshold = 5.0;
+    // Variables to store gate activations during forward pass for use in backpropagation
+    private double[] inputGate;
+    private double[] forgetGate;
+    private double[] outputGate;
+    private double[] cellGate;
 
     public LSTMNetwork(int inputSize, int hiddenSize, int outputSize) {
         this.inputSize = inputSize;
         this.hiddenSize = hiddenSize;
         this.outputSize = outputSize;
 
-        Wf = new double[hiddenSize][inputSize + hiddenSize];
-        Wi = new double[hiddenSize][inputSize + hiddenSize];
-        Wo = new double[hiddenSize][inputSize + hiddenSize];
-        Wc = new double[hiddenSize][inputSize + hiddenSize];
-        Wy = new double[outputSize][hiddenSize];
+        // Initialize weights and biases
+        weightsInputGate = new double[hiddenSize][inputSize];
+        weightsForgetGate = new double[hiddenSize][inputSize];
+        weightsOutputGate = new double[hiddenSize][inputSize];
+        weightsCellGate = new double[hiddenSize][inputSize];
+        weightsHiddenInputGate = new double[hiddenSize][hiddenSize];
+        weightsHiddenForgetGate = new double[hiddenSize][hiddenSize];
+        weightsHiddenOutputGate = new double[hiddenSize][hiddenSize];
+        weightsHiddenCellGate = new double[hiddenSize][hiddenSize];
+        weightsOutput = new double[outputSize][hiddenSize];
 
-        bf = new double[hiddenSize];
-        bi = new double[hiddenSize];
-        bo = new double[hiddenSize];
-        bc = new double[hiddenSize];
-        by = new double[outputSize];
+        biasInputGate = new double[hiddenSize];
+        biasForgetGate = new double[hiddenSize];
+        biasOutputGate = new double[hiddenSize];
+        biasCellGate = new double[hiddenSize];
+        biasOutput = new double[outputSize];
 
+        // Initialize weights and biases with small random values
+        initializeWeights(weightsInputGate);
+        initializeWeights(weightsForgetGate);
+        initializeWeights(weightsOutputGate);
+        initializeWeights(weightsCellGate);
+        initializeWeights(weightsHiddenInputGate);
+        initializeWeights(weightsHiddenForgetGate);
+        initializeWeights(weightsHiddenOutputGate);
+        initializeWeights(weightsHiddenCellGate);
+        initializeWeights(weightsOutput);
+
+        initializeBiases(biasInputGate);
+        initializeBiases(biasForgetGate);
+        initializeBiases(biasOutputGate);
+        initializeBiases(biasCellGate);
+        initializeBiases(biasOutput);
+
+        // Initialize hidden and cell states
         hiddenState = new double[hiddenSize];
         cellState = new double[hiddenSize];
-
-        ft = new double[hiddenSize];
-        it = new double[hiddenSize];
-        ot = new double[hiddenSize];
-        ct_hat = new double[hiddenSize];
-
-        Random rand = new Random();
-        initializeWeights(rand);
     }
 
-    private void initializeWeights(Random rand) {
-        for (int i = 0; i < hiddenSize; i++) {
-            for (int j = 0; j < inputSize + hiddenSize; j++) {
-                Wf[i][j] = rand.nextGaussian() * 0.1;
-                Wi[i][j] = rand.nextGaussian() * 0.1;
-                Wo[i][j] = rand.nextGaussian() * 0.1;
-                Wc[i][j] = rand.nextGaussian() * 0.1;
+    private void initializeWeights(double[][] weights) {
+        for (int i = 0; i < weights.length; i++) {
+            for (int j = 0; j < weights[i].length; j++) {
+                weights[i][j] = Math.random() * 0.01;
             }
-            bf[i] = rand.nextGaussian() * 0.1;
-            bi[i] = rand.nextGaussian() * 0.1;
-            bo[i] = rand.nextGaussian() * 0.1;
-            bc[i] = rand.nextGaussian() * 0.1;
-        }
-
-        for (int i = 0; i < outputSize; i++) {
-            for (int j = 0; j < hiddenSize; j++) {
-                Wy[i][j] = rand.nextGaussian() * 0.1;
-            }
-            by[i] = rand.nextGaussian() * 0.1;
         }
     }
 
-    public double[] forward(double[] input,double[] hiddenState,double[] cellState ) {
-        if (input.length != inputSize) {
-            throw new IllegalArgumentException("Input size must match the network input size" +input.length+ " : "+inputSize);
-        }
+    private void initializeBiases(double[] biases) {
+        Arrays.fill(biases, 0.1);
+    }
 
-        double[] combined = new double[input.length + hiddenState.length];
-        System.arraycopy(input, 0, combined, 0, input.length);
-        System.arraycopy(hiddenState, 0, combined, input.length, hiddenState.length);
+    public double[] forward(double[] input, double[] hiddenState, double[] cellState) {
+        inputGate = sigmoid(add(dotProduct(weightsInputGate, input), dotProduct(weightsHiddenInputGate, hiddenState), biasInputGate));
+        forgetGate = sigmoid(add(dotProduct(weightsForgetGate, input), dotProduct(weightsHiddenForgetGate, hiddenState), biasForgetGate));
+        outputGate = sigmoid(add(dotProduct(weightsOutputGate, input), dotProduct(weightsHiddenOutputGate, hiddenState), biasOutputGate));
+        cellGate = relu(add(dotProduct(weightsCellGate, input), dotProduct(weightsHiddenCellGate, hiddenState), biasCellGate));
 
-        ft = sigmoid(add(matVecMul(Wf, combined), bf));
-        it = sigmoid(add(matVecMul(Wi, combined), bi));
-        ot = sigmoid(add(matVecMul(Wo, combined), bo));
-        ct_hat = tanh(add(matVecMul(Wc, combined), bc));
-
-        double[] newCellState = new double[cellState.length];
         for (int i = 0; i < cellState.length; i++) {
-            newCellState[i] = ft[i] * cellState[i] + it[i] * ct_hat[i];
+            cellState[i] = forgetGate[i] * cellState[i] + inputGate[i] * cellGate[i];
+            hiddenState[i] = outputGate[i] * relu(cellState[i]);
         }
 
-        double[] newHiddenState = new double[hiddenState.length];
-        for (int i = 0; i < hiddenState.length; i++) {
-            newHiddenState[i] = ot[i] * Math.tanh(newCellState[i]);
-        }
-
-        double[] output = add(matVecMul(Wy, newHiddenState), by);
-
-        System.arraycopy(newCellState, 0, cellState, 0, cellState.length);
-        System.arraycopy(newHiddenState, 0, hiddenState, 0, hiddenState.length);
-
-        return output;
+        return relu(dotProduct(weightsOutput, hiddenState));
     }
 
 
-    public void clipGradients(double threshold) {
-        for (int i = 0; i < hiddenSize; i++) {
-            for (int j = 0; j < inputSize + hiddenSize; j++) {
-                Wf[i][j] = Math.min(Wf[i][j], threshold);
-                Wi[i][j] = Math.min(Wi[i][j], threshold);
-                Wo[i][j] = Math.min(Wo[i][j], threshold);
-                Wc[i][j] = Math.min(Wc[i][j], threshold);
-            }
-            bf[i] = Math.min(bf[i], threshold);
-            bi[i] = Math.min(bi[i], threshold);
-            bo[i] = Math.min(bo[i], threshold);
-            bc[i] = Math.min(bc[i], threshold);
+    private double[] add(double[] a, double[] b, double[] c, double[] d) {
+        double[] result = new double[a.length];
+        for (int i = 0; i < a.length; i++) {
+            result[i] = a[i] + b[i] + c[i] + d[i];
         }
-
-        for (int i = 0; i < outputSize; i++) {
-            for (int j = 0; j < hiddenSize; j++) {
-                Wy[i][j] = Math.min(Wy[i][j], threshold);
-            }
-            by[i] = Math.min(by[i], threshold);
-        }
+        return result;
     }
+
 
     public void backpropagate(double[] input, double[] target, double learningRate) {
-        double[] combined = new double[input.length + hiddenState.length];
-        System.arraycopy(input, 0, combined, 0, input.length);
-        System.arraycopy(hiddenState, 0, combined, input.length, hiddenState.length);
+        double[] hiddenState = new double[hiddenSize];
+        double[] cellState = new double[hiddenSize];
+        double[] output = forward(input, hiddenState, cellState);
 
-        double[] ft = sigmoid(add(matVecMul(Wf, combined), bf));
-        double[] it = sigmoid(add(matVecMul(Wi, combined), bi));
-        double[] ot = sigmoid(add(matVecMul(Wo, combined), bo));
-        double[] ct_hat = tanh(add(matVecMul(Wc, combined), bc));
-
-        double[] newCellState = new double[cellState.length];
-        for (int i = 0; i < cellState.length; i++) {
-            newCellState[i] = ft[i] * cellState[i] + it[i] * ct_hat[i];
+        double[] error = new double[target.length];
+        for (int i = 0; i < target.length; i++) {
+            error[i] = target[i] - output[i];
         }
-
-        double[] newHiddenState = new double[hiddenState.length];
-        for (int i = 0; i < hiddenState.length; i++) {
-            newHiddenState[i] = ot[i] * Math.tanh(newCellState[i]);
-        }
-
-        double[] output = add(matVecMul(Wy, newHiddenState), by);
 
         double[] dOutput = new double[output.length];
         for (int i = 0; i < output.length; i++) {
-            dOutput[i] = output[i] - target[i];
+            dOutput[i] = -2 * error[i] * reluDerivative(output[i]);
         }
 
-        double[][] dWy = new double[Wy.length][Wy[0].length];
-        double[] dby = new double[by.length];
-        for (int i = 0; i < Wy.length; i++) {
-            for (int j = 0; j < Wy[0].length; j++) {
-                dWy[i][j] = dOutput[i] * newHiddenState[j];
-            }
-            dby[i] = dOutput[i];
-        }
+        double[][] dWeightsOutput = outerProduct(dOutput, hiddenState);
+        double[] dBiasOutput = dOutput.clone();
 
-        double[] dHiddenState = new double[hiddenSize];
-        for (int i = 0; i < hiddenSize; i++) {
-            for (int j = 0; j < outputSize; j++) {
-                dHiddenState[i] += dOutput[j] * Wy[j][i];
-            }
-            dHiddenState[i] *= ot[i] * (1 - Math.tanh(newCellState[i]) * Math.tanh(newCellState[i]));
-        }
+        double[] dHiddenState = dotProductTranspose(weightsOutput, dOutput);
 
         double[] dCellState = new double[hiddenSize];
-        for (int i = 0; i < hiddenSize; i++) {
-            dCellState[i] = dHiddenState[i] * ot[i] * (1 - Math.tanh(newCellState[i]) * Math.tanh(newCellState[i]));
-            dCellState[i] += newCellState[i] * (1 - newCellState[i]);
-        }
+        double[] dInputGate = new double[hiddenSize];
+        double[] dForgetGate = new double[hiddenSize];
+        double[] dOutputGate = new double[hiddenSize];
+        double[] dCellGate = new double[hiddenSize];
 
-        double[][] dWf = new double[Wf.length][Wf[0].length];
-        double[] dbf = new double[bf.length];
-        for (int i = 0; i < Wf.length; i++) {
-            for (int j = 0; j < Wf[0].length; j++) {
-                dWf[i][j] = dCellState[i] * cellState[i] * ft[i] * (1 - ft[i]) * combined[j];
+        for (int t = hiddenSize - 1; t >= 0; t--) {
+            double[] dOutputGateTemp = new double[hiddenSize];
+            double[] dCellStateTemp = new double[hiddenSize];
+            double[] dInputGateTemp = new double[hiddenSize];
+            double[] dForgetGateTemp = new double[hiddenSize];
+            double[] dCellGateTemp = new double[hiddenSize];
+
+            for (int i = 0; i < hiddenSize; i++) {
+                dOutputGateTemp[i] = dHiddenState[i] * relu(cellState[i]) * sigmoidDerivative(outputGate[i]);
+                dCellStateTemp[i] = dHiddenState[i] * outputGate[i] * reluDerivative(cellState[i]) + dCellState[i];
+                dInputGateTemp[i] = dCellStateTemp[i] * cellGate[i] * sigmoidDerivative(inputGate[i]);
+                dForgetGateTemp[i] = dCellStateTemp[i] * cellState[i] * sigmoidDerivative(forgetGate[i]);
+                dCellGateTemp[i] = dCellStateTemp[i] * inputGate[i] * reluDerivative(cellGate[i]);
             }
-            dbf[i] = dCellState[i] * cellState[i] * ft[i] * (1 - ft[i]);
+
+            dInputGate = add(dInputGate, dInputGateTemp);
+            dForgetGate = add(dForgetGate, dForgetGateTemp);
+            dOutputGate = add(dOutputGate, dOutputGateTemp);
+            dCellGate = add(dCellGate, dCellGateTemp);
+
+            dHiddenState = add(dotProductTranspose(weightsHiddenInputGate, dInputGateTemp),
+                    dotProductTranspose(weightsHiddenForgetGate, dForgetGateTemp),
+                    dotProductTranspose(weightsHiddenOutputGate, dOutputGateTemp),
+                    dotProductTranspose(weightsHiddenCellGate, dCellGateTemp));
         }
 
-        double[][] dWi = new double[Wi.length][Wi[0].length];
-        double[] dbi = new double[bi.length];
-        for (int i = 0; i < Wi.length; i++) {
-            for (int j = 0; j < Wi[0].length; j++) {
-                dWi[i][j] = dCellState[i] * ct_hat[i] * it[i] * (1 - it[i]) * combined[j];
+        double[][] dWeightsInputGate = outerProduct(dInputGate, input);
+        double[][] dWeightsForgetGate = outerProduct(dForgetGate, input);
+        double[][] dWeightsOutputGate = outerProduct(dOutputGate, input);
+        double[][] dWeightsCellGate = outerProduct(dCellGate, input);
+        double[][] dWeightsHiddenInputGate = outerProduct(dInputGate, hiddenState);
+        double[][] dWeightsHiddenForgetGate = outerProduct(dForgetGate, hiddenState);
+        double[][] dWeightsHiddenOutputGate = outerProduct(dOutputGate, hiddenState);
+        double[][] dWeightsHiddenCellGate = outerProduct(dCellGate, hiddenState);
+
+        updateWeights(weightsInputGate, dWeightsInputGate, learningRate);
+        updateWeights(weightsForgetGate, dWeightsForgetGate, learningRate);
+        updateWeights(weightsOutputGate, dWeightsOutputGate, learningRate);
+        updateWeights(weightsCellGate, dWeightsCellGate, learningRate);
+        updateWeights(weightsHiddenInputGate, dWeightsHiddenInputGate, learningRate);
+        updateWeights(weightsHiddenForgetGate, dWeightsHiddenForgetGate, learningRate);
+        updateWeights(weightsHiddenOutputGate, dWeightsHiddenOutputGate, learningRate);
+        updateWeights(weightsHiddenCellGate, dWeightsHiddenCellGate, learningRate);
+        updateWeights(weightsOutput, dWeightsOutput, learningRate);
+
+        updateBiases(biasInputGate, dInputGate, learningRate);
+        updateBiases(biasForgetGate, dForgetGate, learningRate);
+        updateBiases(biasOutputGate, dOutputGate, learningRate);
+        updateBiases(biasCellGate, dCellGate, learningRate);
+        updateBiases(biasOutput, dBiasOutput, learningRate);
+    }
+
+
+    private double[] sigmoid(double[] x) {
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; i++) {
+            result[i] = 1 / (1 + Math.exp(-x[i]));
+        }
+        return result;
+    }
+
+    private double sigmoidDerivative(double x) {
+        return x * (1 - x);
+    }
+
+    private double[] relu(double[] x) {
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; i++) {
+            result[i] = Math.max(0, x[i]);
+        }
+        return result;
+    }
+
+    private double relu(double x) {
+        return Math.max(0, x);
+    }
+
+
+    private double reluDerivative(double x) {
+        return x > 0 ? 1 : 0;
+    }
+
+    private double[] dotProduct(double[][] weights, double[] inputs) {
+        double[] result = new double[weights.length];
+        for (int i = 0; i < weights.length; i++) {
+            for (int j = 0; j < inputs.length; j++) {
+                result[i] += weights[i][j] * inputs[j];
             }
-            dbi[i] = dCellState[i] * ct_hat[i] * it[i] * (1 - it[i]);
         }
+        return result;
+    }
 
-        double[][] dWo = new double[Wo.length][Wo[0].length];
-        double[] dbo = new double[bo.length];
-        for (int i = 0; i < Wo.length; i++) {
-            for (int j = 0; j < Wo[0].length; j++) {
-                dWo[i][j] = dHiddenState[i] * newHiddenState[i] * ot[i] * (1 - ot[i]) * combined[j];
+    private double[] dotProductTranspose(double[][] weights, double[] dOutput) {
+        double[] result = new double[weights[0].length];
+        for (int i = 0; i < weights[0].length; i++) {
+            for (int j = 0; j < dOutput.length; j++) {
+                result[i] += dOutput[j] * weights[j][i];
             }
-            dbo[i] = dHiddenState[i] * newHiddenState[i] * ot[i] * (1 - ot[i]);
         }
+        return result;
+    }
 
-        double[][] dWc = new double[Wc.length][Wc[0].length];
-        double[] dbc = new double[bc.length];
-        for (int i = 0; i < Wc.length; i++) {
-            for (int j = 0; j < Wc[0].length; j++) {
-                dWc[i][j] = dCellState[i] * it[i] * (1 - ct_hat[i] * ct_hat[i]) * combined[j];
+    private double[][] outerProduct(double[] vec1, double[] vec2) {
+        double[][] result = new double[vec1.length][vec2.length];
+        for (int i = 0; i < vec1.length; i++) {
+            for (int j = 0; j < vec2.length; j++) {
+                result[i][j] = vec1[i] * vec2[j];
             }
-            dbc[i] = dCellState[i] * it[i] * (1 - ct_hat[i] * ct_hat[i]);
         }
+        return result;
+    }
 
-        for (int i = 0; i < Wf.length; i++) {
-            for (int j = 0; j < Wf[0].length; j++) {
-                Wf[i][j] -= learningRate * dWf[i][j];
-                Wi[i][j] -= learningRate * dWi[i][j];
-                Wo[i][j] -= learningRate * dWo[i][j];
-                Wc[i][j] -= learningRate * dWc[i][j];
+    private double[] add(double[] a, double[] b) {
+        double[] result = new double[a.length];
+        for (int i = 0; i < a.length; i++) {
+            result[i] = a[i] + b[i];
+        }
+        return result;
+    }
+
+    private double[] add(double[] a, double[] b, double[] c) {
+        double[] result = new double[a.length];
+        for (int i = 0; i < a.length; i++) {
+            result[i] = a[i] + b[i] + c[i];
+        }
+        return result;
+    }
+
+    private void updateWeights(double[][] weights, double[][] dWeights, double learningRate) {
+        for (int i = 0; i < weights.length; i++) {
+            for (int j = 0; j < weights[i].length; j++) {
+                weights[i][j] -= learningRate * dWeights[i][j];
             }
-            bf[i] -= learningRate * dbf[i];
-            bi[i] -= learningRate * dbi[i];
-            bo[i] -= learningRate * dbo[i];
-            bc[i] -= learningRate * dbc[i];
         }
+    }
 
-        for (int i = 0; i < Wy.length; i++) {
-            for (int j = 0; j < Wy[0].length; j++) {
-                Wy[i][j] -= learningRate * dWy[i][j];
-            }
-            by[i] -= learningRate * dby[i];
+    private void updateBiases(double[] biases, double[] dBiases, double learningRate) {
+        for (int i = 0; i < biases.length; i++) {
+            biases[i] -= learningRate * dBiases[i];
         }
-
-        clipGradients(clipThreshold);
     }
 
     public void resetState() {
         hiddenState = new double[hiddenSize];
         cellState = new double[hiddenSize];
-    }
-
-    private double[] matVecMul(double[][] matrix, double[] vector) {
-        double[] result = new double[matrix.length];
-        for (int i = 0; i < matrix.length; i++) {
-            for (int j = 0; j < vector.length; j++) {
-                result[i] += matrix[i][j] * vector[j];
-            }
-        }
-        return result;
-    }
-
-    private double[] add(double[] vec1, double[] vec2) {
-        double[] result = new double[vec1.length];
-        for (int i = 0; i < vec1.length; i++) {
-            result[i] = vec1[i] + vec2[i];
-        }
-        return result;
-    }
-
-    private double[] sigmoid(double[] vec) {
-        double[] result = new double[vec.length];
-        for (int i = 0; i < vec.length; i++) {
-            result[i] = 1.0 / (1.0 + Math.exp(-vec[i]));
-        }
-        return result;
-    }
-
-    private double[] tanh(double[] vec) {
-        double[] result = new double[vec.length];
-        for (int i = 0; i < vec.length; i++) {
-            result[i] = Math.tanh(vec[i]);
-        }
-        return result;
-    }
-
-    public double[] getHiddenState() {
-        return hiddenState;
-    }
-
-    public double[] getCellState() {
-        return cellState;
     }
 
     public void saveModel(String filePath) {
@@ -303,23 +296,19 @@ public class LSTMNetwork implements Serializable {
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
             return (LSTMNetwork) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            System.out.println("\u001B[32m Creating Model....\u001B[0m");
             return null;
         }
     }
 
-    // Get the hidden size
     public int getHiddenSize() {
         return hiddenSize;
     }
 
-    // Get the output weights
-    public double[][] getWy() {
-        return Wy;
+    public double[] getHiddenState() {
+        return hiddenState;
     }
 
-    // Get the output biases
-    public double[] getBy() {
-        return by;
+    public double[] getCellState() {
+        return cellState;
     }
 }

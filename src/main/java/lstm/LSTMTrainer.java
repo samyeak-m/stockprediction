@@ -17,11 +17,9 @@ public class LSTMTrainer {
     }
 
     public void train(double[][] inputs, double[][] targets, int epochs) {
-        // Normalize the data
         double[][] normalizedInputs = DataPreprocessor.normalize(inputs);
         double[][] normalizedTargets = DataPreprocessor.normalize(targets);
 
-        // Split the data into training and testing sets
         double[][][] inputSplits = DataPreprocessor.preprocessData(normalizedInputs, 0.6);
         double[][][] targetSplits = DataPreprocessor.preprocessData(normalizedTargets, 0.6);
 
@@ -36,7 +34,6 @@ public class LSTMTrainer {
         for (int epoch = 0; epoch < epochs; epoch++) {
             double totalError = 0;
 
-            // Shuffle the training data
             List<Integer> indices = new ArrayList<>();
             for (int i = 0; i < trainInputs.length; i++) indices.add(i);
             Collections.shuffle(indices);
@@ -45,17 +42,14 @@ public class LSTMTrainer {
                 double[] input = trainInputs[i];
                 double[] target = trainTargets[i];
 
-                // Reset state for each sequence
                 network.resetState();
 
-                // Forward pass
                 double[] hiddenState = new double[network.getHiddenSize()];
                 double[] cellState = new double[network.getHiddenSize()];
                 double[] output = network.forward(input, hiddenState, cellState);
                 double error = target[0] - output[0];
                 totalError += error * error;
 
-                // Backpropagation
                 network.backpropagate(input, target, learningRate);
             }
 

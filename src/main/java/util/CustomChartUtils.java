@@ -1,62 +1,20 @@
 package util;
 
 import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
 import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import javax.swing.JFrame;
-import org.jfree.chart.ChartPanel;
-import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
-import org.jfree.data.xy.XYSeries;
-import org.jfree.data.xy.XYSeriesCollection;
-
 public class CustomChartUtils {
-
-    public static void saveAccuracyChart(String title, List<Integer> epochs, List<Double> accuracies, String filePath, String xLabel, String yLabel) throws IOException {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        for (int i = 0; i < epochs.size(); i++) {
-            dataset.addValue((Number) accuracies.get(i), "Accuracy", epochs.get(i));
-        }
-
-        JFreeChart lineChart = ChartFactory.createLineChart(
-                title,
-                xLabel,
-                yLabel,
-                dataset,
-                PlotOrientation.VERTICAL,
-                true, true, false);
-
-        File lineChartFile = new File(filePath);
-        ChartUtils.saveChartAsPNG(lineChartFile, lineChart, 800, 600);
-    }
-
-    public static void savePredictionChart(String title, double[] predictions, String filePath, String xLabel, String yLabel) throws IOException {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        for (int i = 0; i < predictions.length; i++) {
-            dataset.addValue((Number) predictions[i], "Prediction", i);
-        }
-
-        JFreeChart lineChart = ChartFactory.createLineChart(
-                title,
-                xLabel,
-                yLabel,
-                dataset,
-                PlotOrientation.VERTICAL,
-                true, true, false);
-
-        File lineChartFile = new File(filePath);
-        ChartUtils.saveChartAsPNG(lineChartFile, lineChart, 800, 600);
-    }
-
     public static void plotTrainingProgress(List<Double> trainingLoss, List<Double> validationLoss) {
         XYSeries trainingSeries = new XYSeries("Training Loss");
         XYSeries validationSeries = new XYSeries("Validation Loss");
@@ -71,26 +29,75 @@ public class CustomChartUtils {
         dataset.addSeries(validationSeries);
 
         JFreeChart chart = ChartFactory.createXYLineChart(
-                "Training Progress",
+                "Training and Validation Loss",
                 "Epoch",
                 "Loss",
                 dataset,
                 PlotOrientation.VERTICAL,
-                true, true, false);
+                true,
+                true,
+                false
+        );
 
         XYPlot plot = chart.getXYPlot();
-        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
-        renderer.setSeriesPaint(0, Color.RED);
-        renderer.setSeriesPaint(1, Color.BLUE);
-        renderer.setSeriesStroke(0, new BasicStroke(2.0f));
-        renderer.setSeriesStroke(1, new BasicStroke(2.0f));
-        plot.setRenderer(renderer);
+        plot.getRenderer().setSeriesPaint(0, new java.awt.Color(0xFF6600));
+        plot.getRenderer().setSeriesPaint(1, new java.awt.Color(0x0066FF));
+
+        ChartPanel chartPanel = new ChartPanel(chart);
+        chartPanel.setPreferredSize(new java.awt.Dimension(800, 600));
 
         JFrame frame = new JFrame("Training Progress");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(new ChartPanel(chart));
+        frame.setContentPane(chartPanel);
         frame.pack();
+        frame.setLocationRelativeTo(null);
         frame.setVisible(true);
     }
 
+    public static void saveAccuracyChart(String title, List<Integer> epochs, List<Double> accuracies, String filePath, String xLabel, String yLabel) throws IOException {
+        XYSeries accuracySeries = new XYSeries("Accuracy");
+
+        for (int i = 0; i < epochs.size(); i++) {
+            accuracySeries.add(epochs.get(i), accuracies.get(i));
+        }
+
+        XYSeriesCollection dataset = new XYSeriesCollection();
+        dataset.addSeries(accuracySeries);
+
+        JFreeChart chart = ChartFactory.createXYLineChart(
+                title,
+                xLabel,
+                yLabel,
+                dataset,
+                PlotOrientation.VERTICAL,
+                true,
+                true,
+                false
+        );
+
+        ChartUtils.saveChartAsPNG(new File(filePath), chart, 800, 600);
+    }
+
+    public static void savePredictionChart(String title, double[] predictions, String filePath, String xLabel, String yLabel) throws IOException {
+        XYSeries predictionSeries = new XYSeries("Predictions");
+
+        for (int i = 0; i < predictions.length; i++) {
+            predictionSeries.add(i + 1, predictions[i]);
+        }
+
+        XYSeriesCollection dataset = new XYSeriesCollection();
+        dataset.addSeries(predictionSeries);
+
+        JFreeChart chart = ChartFactory.createXYLineChart(
+                title,
+                xLabel,
+                yLabel,
+                dataset,
+                PlotOrientation.VERTICAL,
+                true,
+                true,
+                false
+        );
+
+        ChartUtils.saveChartAsPNG(new File(filePath), chart, 800, 600);
+    }
 }
