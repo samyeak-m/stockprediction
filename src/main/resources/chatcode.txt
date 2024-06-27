@@ -1,0 +1,1262 @@
+application.properties
+
+# Database configuration
+db.url=jdbc:mysql://localhost:3306/nepse_test
+db.username=root
+db.password=
+
+1. PropertyLoader.java
+
+package util;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
+public class PropertyLoader {
+    public static Properties loadProperties(String fileName) {
+        Properties properties = new Properties();
+        try (InputStream input = PropertyLoader.class.getClassLoader().getResourceAsStream(fileName)) {
+            if (input == null) {
+                throw new IOException("Unable to find " + fileName);
+            }
+            properties.load(input);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        return properties;
+    }
+}
+
+2. DatabaseHelper.java
+
+package database;
+
+import util.PropertyLoader;
+
+import java.sql.*;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+public class DatabaseHelper {
+    private static final Logger LOGGER = Logger.getLogger(DatabaseHelper.class.getName());
+    private final String url;
+    private final String username;
+    private final String password;
+
+    public DatabaseHelper() {
+        Properties properties = PropertyLoader.loadProperties("application.properties");
+        this.url = properties.getProperty("db.url");
+        this.username = properties.getProperty("db.username");
+        this.password = properties.getProperty("db.password");
+    }
+
+    public Connection connect() throws SQLException {
+//        LOGGER.log(Level.INFO,"Connecting to the database...");
+        return DriverManager.getConnection(url, username, password);
+    }
+
+    public List<String> getAllStockTableNames() throws SQLException {
+        List<String> tableNames = new ArrayList<>();
+        String query = "SHOW TABLES LIKE 'daily_data_%'";
+
+        try (Connection conn = connect();
+             PreparedStatement pstmt = conn.prepareStatement(query);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                String tableName = rs.getString(1);
+                tableNames.add(tableName);
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error fetching stock table names", e);
+            throw e;
+        }
+//        LOGGER.log(Level.INFO, "Fetched {0} stock table names", tableNames.size());
+        return tableNames;
+    }
+
+    public List<double[]> loadStockData(String tableName) throws SQLException {
+        List<double[]> stockData = new ArrayList<>();
+        String query = "SELECT date, close, high, low, open, volume, turnover FROM " + tableName + " ORDER BY date";
+
+        try (Connection conn = connect();
+             PreparedStatement pstmt = conn.prepareStatement(query);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                java.sql.Date date = rs.getDate("date");
+                double close = rs.getDouble("close");
+                double high = rs.getDouble("high");
+                double low = rs.getDouble("low");
+                double open = rs.getDouble("open");
+                double volume = rs.getDouble("volume");
+                double turnover = rs.getDouble("turnover");
+
+                double dateAsDouble = date.getTime();
+
+                stockData.add(new double[]{dateAsDouble, close, high, low, open, volume, turnover});
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error loading stock data for table " + tableName, e);
+            throw e;
+        }
+//        LOGGER.log(Level.INFO, "Loaded {0} rows of stock data from table {1}", new Object[]{stockData.size(), tableName});
+        return stockData;
+    }
+
+    private void createPredictionsTableIfNotExists() throws SQLException {
+        String createTableSQL = "CREATE TABLE IF NOT EXISTS predictions (" +
+                "id INT AUTO_INCREMENT PRIMARY KEY, " +
+                "stock_symbol VARCHAR(10) NOT NULL, " +
+                "predict VARCHAR(255) NOT NULL, " +
+                "point_change VARCHAR(255) NOT NULL, " +
+                "price_change DOUBLE NOT NULL, " +
+                "prediction DOUBLE NOT NULL, " +
+                "actual DOUBLE NOT NULL, " +
+                "date DATE NOT NULL, " +
+                "prediction_date DATE NOT NULL" +
+                ")";
+
+        try (Connection conn = connect();
+             Statement stmt = conn.createStatement()) {
+            stmt.executeUpdate(createTableSQL);
+            LOGGER.log(Level.INFO, "Ensured that predictions table exists");
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error creating predictions table", e);
+            throw e;
+        }
+    }
+
+    public void savePrediction(String stockSymbol, String predict, String pointChangeStr, double priceChange, double prediction, double actual, LocalDate today, LocalDate predictionDate) throws SQLException {
+        createPredictionsTableIfNotExists();
+
+        String query = "INSERT INTO predictions (stock_symbol, predict, point_change, price_change, prediction, actual, date, prediction_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+        try (Connection conn = connect();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, stockSymbol);
+            pstmt.setString(2, predict);
+            pstmt.setString(3, pointChangeStr);
+            pstmt.setDouble(4, priceChange);
+            pstmt.setDouble(5, prediction);
+            pstmt.setDouble(6, actual);
+            pstmt.setDate(7, Date.valueOf(today));
+            pstmt.setDate(8, Date.valueOf(predictionDate));
+            pstmt.executeUpdate();
+            LOGGER.log(Level.INFO, "Saved prediction for stock {0}", stockSymbol);
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error saving prediction for stock " + stockSymbol, e);
+            throw e;
+        }
+    }
+}
+
+3. DataPreprocessor.java
+
+package util;
+
+import java.util.Arrays;
+
+public class DataPreprocessor {
+    public static double[][] normalize(double[][] data) {
+        // Calculate min and max values across columns
+        double[] min = new double[data[0].length];
+        double[] max = new double[data[0].length];
+
+        for (int i = 0; i < data[0].length; i++) {
+            min[i] = Double.MAX_VALUE;
+            max[i] = Double.MIN_VALUE;
+        }
+
+        // Find min and max values
+        for (double[] row : data) {
+            for (int i = 0; i < row.length; i++) {
+                if (row[i] < min[i]) {
+                    min[i] = row[i];
+                }
+                if (row[i] > max[i]) {
+                    max[i] = row[i];
+                }
+            }
+        }
+
+        // Normalize data
+        double[][] normalizedData = new double[data.length][data[0].length];
+        for (int i = 0; i < data.length; i++) {
+            for (int j = 0; j < data[i].length; j++) {
+                normalizedData[i][j] = (data[i][j] - min[j]) / (max[j] - min[j]);
+            }
+        }
+
+        return normalizedData;
+    }
+
+    public static double[][][] preprocessData(double[][] data, double trainingSplit) {
+        int trainSize = (int) (data.length * trainingSplit);
+        double[][] trainData = new double[trainSize][data[0].length];
+        double[][] testData = new double[data.length - trainSize][data[0].length];
+
+        System.arraycopy(data, 0, trainData, 0, trainSize);
+        System.arraycopy(data, trainSize, testData, 0, data.length - trainSize);
+
+        return new double[][][]{trainData, testData};
+    }
+
+    public static double[] removeNaNs(double[] data) {
+        return Arrays.stream(data).filter(Double::isFinite).toArray();
+    }
+
+    public static void checkDataForNaNs(double[] data) {
+        if (Arrays.stream(data).anyMatch(Double::isNaN)) {
+            throw new IllegalArgumentException("Data contains NaN values!");
+        }
+    }
+
+    public static double[][] addFeatures(double[][] stockData, double[][] technicalIndicators) {
+        int numRows = stockData.length;
+        int numCols = stockData[0].length + technicalIndicators[0].length;
+        double[][] extendedData = new double[numRows][numCols];
+
+        for (int i = 0; i < numRows; i++) {
+            System.arraycopy(stockData[i], 0, extendedData[i], 0, stockData[i].length);
+            System.arraycopy(technicalIndicators[i], 0, extendedData[i], stockData[i].length, technicalIndicators[i].length);
+        }
+
+        return extendedData;
+    }
+}
+
+4. CustomChartUtils.java
+
+package util;
+
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.ChartUtils;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
+
+import javax.swing.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+
+public class CustomChartUtils {
+    public static void plotTrainingProgress(List<Double> trainingLoss, List<Double> validationLoss) {
+        XYSeries trainingSeries = new XYSeries("Training Loss");
+        XYSeries validationSeries = new XYSeries("Validation Loss");
+
+        for (int i = 0; i < trainingLoss.size(); i++) {
+            trainingSeries.add(i + 1, trainingLoss.get(i));
+            validationSeries.add(i + 1, validationLoss.get(i));
+        }
+
+        XYSeriesCollection dataset = new XYSeriesCollection();
+        dataset.addSeries(trainingSeries);
+        dataset.addSeries(validationSeries);
+
+        JFreeChart chart = ChartFactory.createXYLineChart(
+                "Training and Validation Loss",
+                "Epoch",
+                "Loss",
+                dataset,
+                PlotOrientation.VERTICAL,
+                true,
+                true,
+                false
+        );
+
+        XYPlot plot = chart.getXYPlot();
+        plot.getRenderer().setSeriesPaint(0, new java.awt.Color(0xFF6600));
+        plot.getRenderer().setSeriesPaint(1, new java.awt.Color(0x0066FF));
+
+        ChartPanel chartPanel = new ChartPanel(chart);
+        chartPanel.setPreferredSize(new java.awt.Dimension(800, 600));
+
+        JFrame frame = new JFrame("Training Progress");
+        frame.setContentPane(chartPanel);
+        frame.pack();
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+    }
+
+    public static void saveAccuracyChart(String title, List<Integer> epochs, List<Double> accuracies, String filePath, String xLabel, String yLabel) throws IOException {
+        XYSeries accuracySeries = new XYSeries("Accuracy");
+
+        for (int i = 0; i < epochs.size(); i++) {
+            accuracySeries.add(epochs.get(i), accuracies.get(i));
+        }
+
+        XYSeriesCollection dataset = new XYSeriesCollection();
+        dataset.addSeries(accuracySeries);
+
+        JFreeChart chart = ChartFactory.createXYLineChart(
+                title,
+                xLabel,
+                yLabel,
+                dataset,
+                PlotOrientation.VERTICAL,
+                true,
+                true,
+                false
+        );
+
+        ChartUtils.saveChartAsPNG(new File(filePath), chart, 800, 600);
+    }
+
+    public static void savePredictionChart(String title, double[] predictions, String filePath, String xLabel, String yLabel) throws IOException {
+        XYSeries predictionSeries = new XYSeries("Predictions");
+
+        for (int i = 0; i < predictions.length; i++) {
+            predictionSeries.add(i + 1, predictions[i]);
+        }
+
+        XYSeriesCollection dataset = new XYSeriesCollection();
+        dataset.addSeries(predictionSeries);
+
+        JFreeChart chart = ChartFactory.createXYLineChart(
+                title,
+                xLabel,
+                yLabel,
+                dataset,
+                PlotOrientation.VERTICAL,
+                true,
+                true,
+                false
+        );
+
+        ChartUtils.saveChartAsPNG(new File(filePath), chart, 800, 600);
+    }
+}
+
+5. PlotUtils.java
+
+package util;
+
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartUtils;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+
+public class PlotUtils {
+
+    public static void savePredictionPlot(String stockSymbol, List<double[]> stockData, List<Double> predictions) {
+        XYSeries seriesActual = new XYSeries("Actual");
+        XYSeries seriesPredicted = new XYSeries("Predicted");
+
+        for (int i = 0; i < stockData.size(); i++) {
+            seriesActual.add(i, stockData.get(i)[1]); // Actual close price
+            if (i >= stockData.size() - predictions.size()) {
+                seriesPredicted.add(i, predictions.get(i - (stockData.size() - predictions.size())));
+            }
+        }
+
+        XYSeriesCollection dataset = new XYSeriesCollection();
+        dataset.addSeries(seriesActual);
+        dataset.addSeries(seriesPredicted);
+
+        JFreeChart chart = ChartFactory.createXYLineChart(
+                "Stock Price Prediction for " + stockSymbol,
+                "Time",
+                "Price",
+                dataset,
+                PlotOrientation.VERTICAL,
+                true, true, false
+        );
+
+        // Save the chart as a PNG
+        String filePath = "predictions/" + stockSymbol + "_prediction.png";
+        File file = new File(filePath);
+        file.getParentFile().mkdirs();
+        try {
+            ChartUtils.saveChartAsPNG(file, chart, 800, 600);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+6. TechnicalIndicators.jav
+
+package util;
+
+public class TechnicalIndicators {
+
+    public static double[] calculateSMA(double[] prices, int period) {
+        double[] sma = new double[prices.length];
+        for (int i = 0; i < prices.length; i++) {
+            if (i < period - 1) {
+                sma[i] = 0;
+            } else {
+                double sum = 0;
+                for (int j = 0; j < period; j++) {
+                    sum += prices[i - j];
+                }
+                sma[i] = sum / period;
+            }
+        }
+        return sma;
+    }
+
+    public static double[] calculateEMA(double[] prices, int period) {
+        double[] ema = new double[prices.length];
+        double multiplier = 2.0 / (period + 1);
+        ema[0] = prices[0];
+        for (int i = 1; i < prices.length; i++) {
+            ema[i] = ((prices[i] - ema[i - 1]) * multiplier) + ema[i - 1];
+        }
+        return ema;
+    }
+
+    public static double[] calculateRSI(double[] prices, int period) {
+        double[] rsi = new double[prices.length];
+        double[] gains = new double[prices.length];
+        double[] losses = new double[prices.length];
+
+        for (int i = 1; i < prices.length; i++) {
+            double change = prices[i] - prices[i - 1];
+            if (change > 0) {
+                gains[i] = change;
+                losses[i] = 0;
+            } else {
+                gains[i] = 0;
+                losses[i] = -change;
+            }
+        }
+
+        double averageGain = 0;
+        double averageLoss = 0;
+        for (int i = 1; i <= period; i++) {
+            averageGain += gains[i];
+            averageLoss += losses[i];
+        }
+        averageGain /= period;
+        averageLoss /= period;
+
+        for (int i = period; i < prices.length; i++) {
+            if (i > period) {
+                averageGain = ((averageGain * (period - 1)) + gains[i]) / period;
+                averageLoss = ((averageLoss * (period - 1)) + losses[i]) / period;
+            }
+
+            double rs = averageGain / averageLoss;
+            rsi[i] = 100 - (100 / (1 + rs));
+        }
+        return rsi;
+    }
+
+    public static double[][] calculateMACD(double[] prices, int shortPeriod, int longPeriod, int signalPeriod) {
+        double[] emaShort = calculateEMA(prices, shortPeriod);
+        double[] emaLong = calculateEMA(prices, longPeriod);
+        double[] macd = new double[prices.length];
+        for (int i = 0; i < prices.length; i++) {
+            macd[i] = emaShort[i] - emaLong[i];
+        }
+        double[] signal = calculateEMA(macd, signalPeriod);
+        double[] histogram = new double[prices.length];
+        for (int i = 0; i < prices.length; i++) {
+            histogram[i] = macd[i] - signal[i];
+        }
+        return new double[][]{macd, signal, histogram};
+    }
+
+    public static double[][] calculateBollingerBands(double[] prices, int period, double stdDevMultiplier) {
+        double[] sma = calculateSMA(prices, period);
+        double[] upperBand = new double[prices.length];
+        double[] lowerBand = new double[prices.length];
+
+        for (int i = period - 1; i < prices.length; i++) {
+            double sum = 0;
+            for (int j = 0; j < period; j++) {
+                sum += Math.pow(prices[i - j] - sma[i], 2);
+            }
+            double stdDev = Math.sqrt(sum / period);
+            upperBand[i] = sma[i] + (stdDevMultiplier * stdDev);
+            lowerBand[i] = sma[i] - (stdDevMultiplier * stdDev);
+        }
+        return new double[][]{sma, upperBand, lowerBand};
+    }
+
+    public static double[] calculateATR(double[] high, double[] low, double[] close, int period) {
+        double[] atr = new double[close.length];
+        double[] tr = new double[close.length];
+
+        for (int i = 1; i < close.length; i++) {
+            double highLow = high[i] - low[i];
+            double highClose = Math.abs(high[i] - close[i - 1]);
+            double lowClose = Math.abs(low[i] - close[i - 1]);
+            tr[i] = Math.max(highLow, Math.max(highClose, lowClose));
+        }
+
+        double sum = 0;
+        for (int i = 1; i <= period; i++) {
+            sum += tr[i];
+        }
+        atr[period] = sum / period;
+
+        for (int i = period + 1; i < close.length; i++) {
+            atr[i] = ((atr[i - 1] * (period - 1)) + tr[i]) / period;
+        }
+        return atr;
+    }
+
+    public static double[][] calculateStochasticOscillator(double[] close, double[] high, double[] low, int period) {
+        double[] k = new double[close.length];
+        double[] d = new double[close.length];
+
+        for (int i = period - 1; i < close.length; i++) {
+            double highestHigh = Double.MIN_VALUE;
+            double lowestLow = Double.MAX_VALUE;
+            for (int j = 0; j < period; j++) {
+                if (high[i - j] > highestHigh) {
+                    highestHigh = high[i - j];
+                }
+                if (low[i - j] < lowestLow) {
+                    lowestLow = low[i - j];
+                }
+            }
+            k[i] = ((close[i] - lowestLow) / (highestHigh - lowestLow)) * 100;
+        }
+
+        for (int i = period * 2 - 2; i < close.length; i++) {
+            double sum = 0;
+            for (int j = 0; j < period; j++) {
+                sum += k[i - j];
+            }
+            d[i] = sum / period;
+        }
+        return new double[][]{k, d};
+    }
+
+    public static double[][] calculate(double[][] stockData, int smaPeriod, int emaPeriod) {
+        int priceIndex = 1;
+
+        double[] prices = new double[stockData.length];
+
+        for (int i = 0; i < stockData.length; i++) {
+            prices[i] = stockData[i][priceIndex];
+
+        }
+
+        double[] sma = calculateSMA(prices, smaPeriod);
+        double[] ema = calculateEMA(prices, emaPeriod);
+
+        double[][] indicators = new double[stockData.length][2];
+
+        for (int i = 0; i < stockData.length; i++) {
+            indicators[i][0] = sma[i];
+            indicators[i][1] = ema[i];
+        }
+
+        return indicators;
+    }
+}
+
+7. lstmnetwork.java
+
+package lstm;
+
+import java.io.*;
+import java.util.Arrays;
+
+public class LSTMNetwork implements Serializable {
+    private int hiddenSize;
+    private double[][] weightsInputGate;
+    private double[][] weightsForgetGate;
+    private double[][] weightsOutputGate;
+    private double[][] weightsCellGate;
+    private double[][] weightsHiddenInputGate;
+    private double[][] weightsHiddenForgetGate;
+    private double[][] weightsHiddenOutputGate;
+    private double[][] weightsHiddenCellGate;
+    private double[][] weightsOutput;
+    private double[] biasInputGate;
+    private double[] biasForgetGate;
+    private double[] biasOutputGate;
+    private double[] biasCellGate;
+    private double[] biasOutput;
+
+    private double[] hiddenState;
+    private double[] cellState;
+
+    // Variables to store gate activations during forward pass for use in backpropagation
+    private double[] inputGate;
+    private double[] forgetGate;
+    private double[] outputGate;
+    private double[] cellGate;
+
+    public LSTMNetwork(int inputSize, int hiddenSize, int outputSize) {
+        this.hiddenSize = hiddenSize;
+
+        // Initialize weights and biases
+        weightsInputGate = new double[hiddenSize][inputSize];
+        weightsForgetGate = new double[hiddenSize][inputSize];
+        weightsOutputGate = new double[hiddenSize][inputSize];
+        weightsCellGate = new double[hiddenSize][inputSize];
+        weightsHiddenInputGate = new double[hiddenSize][hiddenSize];
+        weightsHiddenForgetGate = new double[hiddenSize][hiddenSize];
+        weightsHiddenOutputGate = new double[hiddenSize][hiddenSize];
+        weightsHiddenCellGate = new double[hiddenSize][hiddenSize];
+        weightsOutput = new double[outputSize][hiddenSize];
+
+        biasInputGate = new double[hiddenSize];
+        biasForgetGate = new double[hiddenSize];
+        biasOutputGate = new double[hiddenSize];
+        biasCellGate = new double[hiddenSize];
+        biasOutput = new double[outputSize];
+
+        // Initialize weights and biases with small random values
+        initializeWeights(weightsInputGate);
+        initializeWeights(weightsForgetGate);
+        initializeWeights(weightsOutputGate);
+        initializeWeights(weightsCellGate);
+        initializeWeights(weightsHiddenInputGate);
+        initializeWeights(weightsHiddenForgetGate);
+        initializeWeights(weightsHiddenOutputGate);
+        initializeWeights(weightsHiddenCellGate);
+        initializeWeights(weightsOutput);
+
+        initializeBiases(biasInputGate);
+        initializeBiases(biasForgetGate);
+        initializeBiases(biasOutputGate);
+        initializeBiases(biasCellGate);
+        initializeBiases(biasOutput);
+
+        // Initialize hidden and cell states
+        hiddenState = new double[hiddenSize];
+        cellState = new double[hiddenSize];
+    }
+
+    private void initializeWeights(double[][] weights) {
+        for (int i = 0; i < weights.length; i++) {
+            for (int j = 0; j < weights[i].length; j++) {
+                weights[i][j] = Math.random() * 0.01;
+            }
+        }
+    }
+
+    private void initializeBiases(double[] biases) {
+        Arrays.fill(biases, 0.1);
+    }
+
+    public double[] forward(double[] input, double[] hiddenState, double[] cellState) {
+        inputGate = relu(add(dotProduct(weightsInputGate, input), dotProduct(weightsHiddenInputGate, hiddenState), biasInputGate));
+        forgetGate = relu(add(dotProduct(weightsForgetGate, input), dotProduct(weightsHiddenForgetGate, hiddenState), biasForgetGate));
+        outputGate = relu(add(dotProduct(weightsOutputGate, input), dotProduct(weightsHiddenOutputGate, hiddenState), biasOutputGate));
+        cellGate = relu(add(dotProduct(weightsCellGate, input), dotProduct(weightsHiddenCellGate, hiddenState), biasCellGate));
+
+        for (int i = 0; i < cellState.length; i++) {
+            cellState[i] = forgetGate[i] * cellState[i] + inputGate[i] * cellGate[i];
+            hiddenState[i] = outputGate[i] * relu(cellState[i]);
+        }
+
+        return relu(dotProduct(weightsOutput, hiddenState));
+    }
+
+    private double[] add(double[] a, double[] b, double[] c, double[] d) {
+        double[] result = new double[a.length];
+        for (int i = 0; i < a.length; i++) {
+            result[i] = a[i] + b[i] + c[i] + d[i];
+        }
+        return result;
+    }
+
+    public void backpropagate(double[] input, double[] target, double learningRate) {
+        double[] hiddenState = new double[hiddenSize];
+        double[] cellState = new double[hiddenSize];
+        double[] output = forward(input, hiddenState, cellState);
+
+        double[] error = new double[target.length];
+        for (int i = 0; i < target.length; i++) {
+            error[i] = target[i] - output[i];
+        }
+
+        double[] dOutput = new double[output.length];
+        for (int i = 0; i < output.length; i++) {
+            dOutput[i] = -2 * error[i] * reluDerivative(output[i]);
+        }
+
+        double[][] dWeightsOutput = outerProduct(dOutput, hiddenState);
+        double[] dBiasOutput = dOutput.clone();
+
+        double[] dHiddenState = dotProductTranspose(weightsOutput, dOutput);
+
+        double[] dCellState = new double[hiddenSize];
+        double[] dInputGate = new double[hiddenSize];
+        double[] dForgetGate = new double[hiddenSize];
+        double[] dOutputGate = new double[hiddenSize];
+        double[] dCellGate = new double[hiddenSize];
+
+        for (int t = hiddenSize - 1; t >= 0; t--) {
+            double[] dOutputGateTemp = new double[hiddenSize];
+            double[] dCellStateTemp = new double[hiddenSize];
+            double[] dInputGateTemp = new double[hiddenSize];
+            double[] dForgetGateTemp = new double[hiddenSize];
+            double[] dCellGateTemp = new double[hiddenSize];
+
+            for (int i = 0; i < hiddenSize; i++) {
+                dOutputGateTemp[i] = dHiddenState[i] * relu(cellState[i]) * reluDerivative(outputGate[i]);
+                dCellStateTemp[i] = dHiddenState[i] * outputGate[i] * reluDerivative(cellState[i]) + dCellState[i];
+                dInputGateTemp[i] = dCellStateTemp[i] * cellGate[i] * reluDerivative(inputGate[i]);
+                dForgetGateTemp[i] = dCellStateTemp[i] * cellState[i] * reluDerivative(forgetGate[i]);
+                dCellGateTemp[i] = dCellStateTemp[i] * inputGate[i] * reluDerivative(cellGate[i]);
+            }
+
+            dInputGate = add(dInputGate, dInputGateTemp);
+            dForgetGate = add(dForgetGate, dForgetGateTemp);
+            dOutputGate = add(dOutputGate, dOutputGateTemp);
+            dCellGate = add(dCellGate, dCellGateTemp);
+
+            dHiddenState = add(dotProductTranspose(weightsHiddenInputGate, dInputGateTemp),
+                    dotProductTranspose(weightsHiddenForgetGate, dForgetGateTemp),
+                    dotProductTranspose(weightsHiddenOutputGate, dOutputGateTemp),
+                    dotProductTranspose(weightsHiddenCellGate, dCellGateTemp));
+        }
+
+        double[][] dWeightsInputGate = outerProduct(dInputGate, input);
+        double[][] dWeightsForgetGate = outerProduct(dForgetGate, input);
+        double[][] dWeightsOutputGate = outerProduct(dOutputGate, input);
+        double[][] dWeightsCellGate = outerProduct(dCellGate, input);
+        double[][] dWeightsHiddenInputGate = outerProduct(dInputGate, hiddenState);
+        double[][] dWeightsHiddenForgetGate = outerProduct(dForgetGate, hiddenState);
+        double[][] dWeightsHiddenOutputGate = outerProduct(dOutputGate, hiddenState);
+        double[][] dWeightsHiddenCellGate = outerProduct(dCellGate, hiddenState);
+
+        updateWeights(weightsInputGate, dWeightsInputGate, learningRate);
+        updateWeights(weightsForgetGate, dWeightsForgetGate, learningRate);
+        updateWeights(weightsOutputGate, dWeightsOutputGate, learningRate);
+        updateWeights(weightsCellGate, dWeightsCellGate, learningRate);
+        updateWeights(weightsHiddenInputGate, dWeightsHiddenInputGate, learningRate);
+        updateWeights(weightsHiddenForgetGate, dWeightsHiddenForgetGate, learningRate);
+        updateWeights(weightsHiddenOutputGate, dWeightsHiddenOutputGate, learningRate);
+        updateWeights(weightsHiddenCellGate, dWeightsHiddenCellGate, learningRate);
+        updateWeights(weightsOutput, dWeightsOutput, learningRate);
+
+        updateBiases(biasInputGate, dInputGate, learningRate);
+        updateBiases(biasForgetGate, dForgetGate, learningRate);
+        updateBiases(biasOutputGate, dOutputGate, learningRate);
+        updateBiases(biasCellGate, dCellGate, learningRate);
+        updateBiases(biasOutput, dBiasOutput, learningRate);
+    }
+
+    private double[] relu(double[] x) {
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; i++) {
+            result[i] = Math.max(0, x[i]);
+        }
+        return result;
+    }
+
+    private double relu(double x) {
+        return Math.max(0, x);
+    }
+
+    private double reluDerivative(double x) {
+        return x > 0 ? 1 : 0;
+    }
+
+    private double[] dotProduct(double[][] weights, double[] inputs) {
+        double[] result = new double[weights.length];
+        for (int i = 0; i < weights.length; i++) {
+            for (int j = 0; j < inputs.length; j++) {
+                result[i] += weights[i][j] * inputs[j];
+            }
+        }
+        return result;
+    }
+
+    private double[] dotProductTranspose(double[][] weights, double[] dOutput) {
+        double[] result = new double[weights[0].length];
+        for (int i = 0; i < weights[0].length; i++) {
+            for (int j = 0; j < dOutput.length; j++) {
+                result[i] += dOutput[j] * weights[j][i];
+            }
+        }
+        return result;
+    }
+
+    private double[][] outerProduct(double[] vec1, double[] vec2) {
+        double[][] result = new double[vec1.length][vec2.length];
+        for (int i = 0; i < vec1.length; i++) {
+            for (int j = 0; j < vec2.length; j++) {
+                result[i][j] = vec1[i] * vec2[j];
+            }
+        }
+        return result;
+    }
+
+    private double[] add(double[] a, double[] b) {
+        double[] result = new double[a.length];
+        for (int i = 0; i < a.length; i++) {
+            result[i] = a[i] + b[i];
+        }
+        return result;
+    }
+
+    private double[] add(double[] a, double[] b, double[] c) {
+        double[] result = new double[a.length];
+        for (int i = 0; i < a.length; i++) {
+            result[i] = a[i] + b[i] + c[i];
+        }
+        return result;
+    }
+
+    private void updateWeights(double[][] weights, double[][] dWeights, double learningRate) {
+        for (int i = 0; i < weights.length; i++) {
+            for (int j = 0; j < weights[i].length; j++) {
+                weights[i][j] -= learningRate * dWeights[i][j];
+            }
+        }
+    }
+
+    private void updateBiases(double[] biases, double[] dBiases, double learningRate) {
+        for (int i = 0; i < biases.length; i++) {
+            biases[i] -= learningRate * dBiases[i];
+        }
+    }
+
+    public void resetState() {
+        hiddenState = new double[hiddenSize];
+        cellState = new double[hiddenSize];
+    }
+
+    public void saveModel(String filePath) {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
+            oos.writeObject(this);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static LSTMNetwork loadModel(String filePath) {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
+            System.out.println("Model loading");
+            return (LSTMNetwork) ois.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("Creating model");
+            return null;
+        }
+    }
+
+    public int getHiddenSize() {
+        return hiddenSize;
+    }
+
+    public double[] getHiddenState() {
+        return hiddenState;
+    }
+
+    public double[] getCellState() {
+        return cellState;
+    }
+}
+
+8. lstmtrainer.java
+
+package lstm;
+
+import util.CustomChartUtils;
+import util.DataPreprocessor;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.logging.Logger;
+import java.util.logging.Level;
+
+public class LSTMTrainer {
+    private final LSTMNetwork network;
+    private final double learningRate;
+
+    private static final Logger LOGGER = Logger.getLogger(LSTMTrainer.class.getName());
+
+
+    public LSTMTrainer(LSTMNetwork network, double learningRate) {
+        this.network = network;
+        this.learningRate = learningRate;
+    }
+
+    public void train(double[][] inputs, double[][] targets, int epochs) {
+        double[][] normalizedInputs = DataPreprocessor.normalize(inputs);
+        double[][] normalizedTargets = DataPreprocessor.normalize(targets);
+
+        double[][][] inputSplits = DataPreprocessor.preprocessData(normalizedInputs, 0.6);
+        double[][][] targetSplits = DataPreprocessor.preprocessData(normalizedTargets, 0.6);
+
+        double[][] trainInputs = inputSplits[0];
+        double[][] testInputs = inputSplits[1];
+        double[][] trainTargets = targetSplits[0];
+        double[][] testTargets = targetSplits[1];
+
+        List<Double> trainingLoss = new ArrayList<>();
+        List<Double> validationLoss = new ArrayList<>();
+
+        for (int epoch = 0; epoch < epochs; epoch++) {
+            double totalError = 0;
+            int correctPredictions = 0;
+            long startTime = System.currentTimeMillis();
+
+            List<Integer> indices = new ArrayList<>();
+            for (int i = 0; i < trainInputs.length; i++) indices.add(i);
+            Collections.shuffle(indices);
+
+            for (int i : indices) {
+                double[] input = trainInputs[i];
+                double[] target = trainTargets[i];
+
+                network.resetState();
+
+                double[] hiddenState = new double[network.getHiddenSize()];
+                double[] cellState = new double[network.getHiddenSize()];
+                double[] output = network.forward(input, hiddenState, cellState);
+                double error = target[0] - output[0];
+                totalError += error * error;
+
+                network.backpropagate(input, target, learningRate);
+
+                // Calculate accuracy (if applicable)
+                if (Math.abs(output[0] - target[0]) < 0.01 * target[0]) {
+                    correctPredictions++;
+                }
+            }
+
+            trainingLoss.add(totalError / trainInputs.length);
+            validationLoss.add(validate(testInputs, testTargets));
+
+            long endTime = System.currentTimeMillis();
+            long epochTime = endTime - startTime;
+
+            LOGGER.log(Level.INFO, String.format("Epoch %d: Accuracy = %.4f, Loss = %.6f, Time = %d ms",
+                    epoch, (double) correctPredictions / trainInputs.length, totalError / trainInputs.length, epochTime));
+        }
+
+        CustomChartUtils.plotTrainingProgress(trainingLoss, validationLoss);
+    }
+
+
+    private double validate(double[][] inputs, double[][] targets) {
+        double totalError = 0;
+
+        for (int i = 0; i < inputs.length; i++) {
+            double[] input = inputs[i];
+            double[] target = targets[i];
+            double[] hiddenState = new double[network.getHiddenSize()];
+            double[] cellState = new double[network.getHiddenSize()];
+
+            double[] output = network.forward(input, hiddenState, cellState);
+            double error = target[0] - output[0];
+            totalError += error * error;
+        }
+
+        return totalError / inputs.length;
+    }
+}
+
+9. main.java
+
+
+import util.CustomChartUtils;
+import util.DataPreprocessor;
+import util.TechnicalIndicators;
+import lstm.LSTMNetwork;
+import lstm.LSTMTrainer;
+import database.DatabaseHelper;
+
+import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.*;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+public class Main {
+    static String version = "v3";
+
+    private static final String MODEL_FILE_PATH = "lstm_model" + version + ".ser";
+    private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
+    private static final String RESET = "\u001B[0m";
+    private static final String GREEN = "\u001B[32m";
+    private static final String BLUE = "\u001B[34m";
+    private static final String YELLOW = "\u001B[33m";
+
+    static int hiddenSize = 100;
+    static int inputSize = 8;
+    static int outputSize = 1;
+    static int epoch = 15;
+    static double trainingRate = 0.001;
+
+    private static final List<Integer> epochList = new ArrayList<>();
+    private static final List<Double> accuracyList = new ArrayList<>();
+
+    public static void main(String[] args) throws SQLException, IOException, ClassNotFoundException {
+        LOGGER.setLevel(Level.INFO);
+        ConsoleHandler handler = new ConsoleHandler();
+        handler.setLevel(Level.INFO);
+        LOGGER.addHandler(handler);
+
+        DatabaseHelper dbHelper = new DatabaseHelper();
+
+        LSTMNetwork lstm = LSTMNetwork.loadModel(MODEL_FILE_PATH);
+        if (lstm == null) {
+            lstm = new LSTMNetwork(inputSize, hiddenSize, outputSize);
+        }
+
+        List<String> tableNames = dbHelper.getAllStockTableNames();
+        List<double[]> allStockData = new ArrayList<>();
+
+        for (String tableName : tableNames) {
+            allStockData.addAll(dbHelper.loadStockData(tableName));
+        }
+
+        double[][] stockDataArray = allStockData.toArray(new double[0][]);
+
+        // Calculate technical indicators
+        double[][] technicalIndicators = TechnicalIndicators.calculate(stockDataArray, 20, 20);
+
+        // Combine stock data with technical indicators
+        double[][] extendedData = DataPreprocessor.addFeatures(stockDataArray, technicalIndicators);
+
+        double[][][] preprocessedData = DataPreprocessor.preprocessData(extendedData, 0.6);
+        double[][] trainData = preprocessedData[0];
+        double[][] testData = preprocessedData[1];
+
+        LOGGER.log(Level.INFO, BLUE + "Training data size: " + trainData.length + RESET);
+        LOGGER.log(Level.INFO, BLUE + "Test data size: " + testData.length + RESET);
+
+        trainModel(lstm, trainData, epoch, trainingRate);
+
+        double accuracy = testModel(lstm, testData);
+
+        lstm.saveModel(MODEL_FILE_PATH);
+
+        String accuracyChartDir = "charts" + version + File.separator + "accuracy";
+        String predictionChartDir = "charts" + version + File.separator + "predictions";
+        createDirectory(accuracyChartDir);
+        createDirectory(predictionChartDir);
+
+        CustomChartUtils.saveAccuracyChart("Model Accuracy", epochList, accuracyList, accuracyChartDir + File.separator + "model_accuracy.png", "Epochs", "Accuracy");
+
+        try (Scanner scanner = new Scanner(System.in)) {
+            while (true) {
+                System.out.print("Enter the stock symbol to predict: ");
+                String stock = scanner.nextLine();
+                String stockSymbol = "daily_data_" + stock;
+                System.out.print("Enter the number of days for prediction: ");
+                int days = scanner.nextInt();
+                scanner.nextLine();
+
+                predictAndSave(dbHelper, lstm, stockSymbol, days, predictionChartDir);
+
+                System.out.print(BLUE + "Do you want to predict for another stock? (yes/no): " + RESET);
+                String response = scanner.nextLine();
+                if (!response.equalsIgnoreCase("yes")) {
+                    break;
+                }
+            }
+        }
+    }
+
+    private static void trainModel(LSTMNetwork lstm, double[][] trainData, int epochs, double learningRate) {
+        LSTMTrainer trainer = new LSTMTrainer(lstm, learningRate);
+        double prevAccuracy = 0;
+        int sameCount = 0;
+
+        for (int epoch = 0; epoch < epochs; epoch++) {
+            long startTime = System.currentTimeMillis();
+            int totalDataPoints = trainData.length;
+            int batchSize = 32; // Example batch size, adjust as needed
+            int batches = totalDataPoints / batchSize;
+
+            // Shuffle trainData
+            shuffleArray(trainData);
+
+            double totalLoss = 0;
+
+            // Train in batches
+            for (int batch = 0; batch < batches; batch++) {
+                double[][] batchData = Arrays.copyOfRange(trainData, batch * batchSize, (batch + 1) * batchSize);
+                for (double[] data : batchData) {
+                    double[] input = Arrays.copyOfRange(data, 0, data.length - 1);
+                    double[] target = new double[]{data[data.length - 1]};
+                    lstm.backpropagate(input, target, learningRate);
+                }
+            }
+
+            // Calculate accuracy and loss
+            double accuracy = testModel(lstm, trainData);
+            double epochLoss = calculateLoss(lstm, trainData);
+
+            // Logging
+            long endTime = System.currentTimeMillis();
+            long elapsedTime = endTime - startTime;
+
+            epochList.add(epoch);
+            accuracyList.add(accuracy);
+
+            LOGGER.log(Level.INFO, String.format(YELLOW + "Epoch %d: Accuracy = %.4f, Loss = %.6f, Time = %d ms" + RESET, epoch, accuracy, epochLoss, elapsedTime));
+
+            // Check if accuracy is the same as previous epoch
+            if (Math.abs(accuracy - prevAccuracy) < 0.01) {
+                sameCount++;
+            } else {
+                sameCount = 0;
+            }
+
+            // If accuracy is the same for 2 consecutive epochs, reinitialize the model
+            if (sameCount == 2) {
+                lstm = new LSTMNetwork(inputSize, hiddenSize, outputSize);
+                trainer = new LSTMTrainer(lstm, learningRate);
+                sameCount = 0;
+            }
+
+            prevAccuracy = accuracy;
+        }
+    }
+
+    private static double testModel(LSTMNetwork lstm, double[][] testData) {
+        int correctPredictions = 0;
+        for (double[] point : testData) {
+            double[] input = new double[point.length - 1];
+            System.arraycopy(point, 0, input, 0, point.length - 1);
+            double[] output = lstm.forward(input, lstm.getHiddenState(), lstm.getCellState());
+            double prediction = output[0];
+            double actual = point[point.length - 1];
+
+            if (Math.abs(prediction - actual) < 0.01 * actual) {
+                correctPredictions++;
+            }
+        }
+        return (double) correctPredictions / testData.length;
+    }
+
+    private static double calculateLoss(LSTMNetwork lstm, double[][] data) {
+        double totalLoss = 0;
+        for (double[] point : data) {
+            double[] input = new double[point.length - 1];
+            System.arraycopy(point, 0, input, 0, point.length - 1);
+            double[] output = lstm.forward(input, lstm.getHiddenState(), lstm.getCellState());
+            double prediction = output[0];
+            double actual = point[point.length - 1];
+            totalLoss += Math.pow(actual - prediction, 2); // MSE loss
+        }
+        return totalLoss / data.length;
+    }
+
+    private static void shuffleArray(double[][] array) {
+        List<double[]> list = Arrays.asList(array);
+        Collections.shuffle(list);
+        list.toArray(array);
+    }
+
+    private static void createDirectory(String directory) {
+        File dir = new File(directory);
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+    }
+
+    private static void predictAndSave(DatabaseHelper dbHelper, LSTMNetwork lstm, String stockSymbol, int days, String predictionChartDir) throws SQLException, IOException {
+        List<double[]> stockData = dbHelper.loadStockData(stockSymbol);
+        double[][] stockDataArray = stockData.toArray(new double[0][]);
+        double[][] technicalIndicators = TechnicalIndicators.calculate(stockDataArray, 20, 20);
+        double[][] extendedData = DataPreprocessor.addFeatures(stockDataArray, technicalIndicators);
+
+        double[][] input = new double[days][extendedData[0].length];
+        for (int i = 0; i < days; i++) {
+            System.arraycopy(extendedData[i], 0, input[i], 0, extendedData[i].length);
+        }
+
+        double[] predictions = new double[days];
+        for (int i = 0; i < days; i++) {
+            double[] currentInput = Arrays.copyOfRange(input[i], 0, input[i].length - 1);
+            double[] output = lstm.forward(currentInput, lstm.getHiddenState(), lstm.getCellState());
+            predictions[i] = output[0];
+        }
+
+        CustomChartUtils.savePredictionChart("Predictions for " + stockSymbol, predictions, predictionChartDir + File.separator + stockSymbol + "_predictions.png", "Days", "Price");
+    }
+}
+
+10. porm.xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://www.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.example</groupId>
+    <artifactId>StockPrediction</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <maven.compiler.source>22</maven.compiler.source>
+        <maven.compiler.target>22</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.29</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jfree</groupId>
+            <artifactId>jfreechart</artifactId>
+            <version>1.5.3</version>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.6.0</version>
+                <configuration>
+                    <mainClass>Main</mainClass>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.6.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>Main</mainClass>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

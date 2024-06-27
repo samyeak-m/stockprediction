@@ -6,10 +6,15 @@ import util.DataPreprocessor;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
 public class LSTMTrainer {
     private final LSTMNetwork network;
     private final double learningRate;
+
+    private static final Logger LOGGER = Logger.getLogger(LSTMTrainer.class.getName());
+
 
     public LSTMTrainer(LSTMNetwork network, double learningRate) {
         this.network = network;
@@ -33,6 +38,8 @@ public class LSTMTrainer {
 
         for (int epoch = 0; epoch < epochs; epoch++) {
             double totalError = 0;
+            int correctPredictions = 0;
+            long startTime = System.currentTimeMillis();
 
             List<Integer> indices = new ArrayList<>();
             for (int i = 0; i < trainInputs.length; i++) indices.add(i);
@@ -51,15 +58,26 @@ public class LSTMTrainer {
                 totalError += error * error;
 
                 network.backpropagate(input, target, learningRate);
+
+                // Calculate accuracy (if applicable)
+                if (Math.abs(output[0] - target[0]) < 0.01 * target[0]) {
+                    correctPredictions++;
+                }
             }
 
             trainingLoss.add(totalError / trainInputs.length);
             validationLoss.add(validate(testInputs, testTargets));
-            System.out.println("Epoch " + (epoch + 1) + " complete. Training Loss: " + totalError / trainInputs.length);
+
+            long endTime = System.currentTimeMillis();
+            long epochTime = endTime - startTime;
+
+            LOGGER.log(Level.INFO, String.format("Epoch %d: Accuracy = %.4f, Loss = %.6f, Time = %d ms",
+                    epoch, (double) correctPredictions / trainInputs.length, totalError / trainInputs.length, epochTime));
         }
 
         CustomChartUtils.plotTrainingProgress(trainingLoss, validationLoss);
     }
+
 
     private double validate(double[][] inputs, double[][] targets) {
         double totalError = 0;

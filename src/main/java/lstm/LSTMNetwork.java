@@ -4,9 +4,7 @@ import java.io.*;
 import java.util.Arrays;
 
 public class LSTMNetwork implements Serializable {
-    private int inputSize;
     private int hiddenSize;
-    private int outputSize;
     private double[][] weightsInputGate;
     private double[][] weightsForgetGate;
     private double[][] weightsOutputGate;
@@ -32,9 +30,7 @@ public class LSTMNetwork implements Serializable {
     private double[] cellGate;
 
     public LSTMNetwork(int inputSize, int hiddenSize, int outputSize) {
-        this.inputSize = inputSize;
         this.hiddenSize = hiddenSize;
-        this.outputSize = outputSize;
 
         // Initialize weights and biases
         weightsInputGate = new double[hiddenSize][inputSize];
@@ -88,9 +84,9 @@ public class LSTMNetwork implements Serializable {
     }
 
     public double[] forward(double[] input, double[] hiddenState, double[] cellState) {
-        inputGate = sigmoid(add(dotProduct(weightsInputGate, input), dotProduct(weightsHiddenInputGate, hiddenState), biasInputGate));
-        forgetGate = sigmoid(add(dotProduct(weightsForgetGate, input), dotProduct(weightsHiddenForgetGate, hiddenState), biasForgetGate));
-        outputGate = sigmoid(add(dotProduct(weightsOutputGate, input), dotProduct(weightsHiddenOutputGate, hiddenState), biasOutputGate));
+        inputGate = relu(add(dotProduct(weightsInputGate, input), dotProduct(weightsHiddenInputGate, hiddenState), biasInputGate));
+        forgetGate = relu(add(dotProduct(weightsForgetGate, input), dotProduct(weightsHiddenForgetGate, hiddenState), biasForgetGate));
+        outputGate = relu(add(dotProduct(weightsOutputGate, input), dotProduct(weightsHiddenOutputGate, hiddenState), biasOutputGate));
         cellGate = relu(add(dotProduct(weightsCellGate, input), dotProduct(weightsHiddenCellGate, hiddenState), biasCellGate));
 
         for (int i = 0; i < cellState.length; i++) {
@@ -101,7 +97,6 @@ public class LSTMNetwork implements Serializable {
         return relu(dotProduct(weightsOutput, hiddenState));
     }
 
-
     private double[] add(double[] a, double[] b, double[] c, double[] d) {
         double[] result = new double[a.length];
         for (int i = 0; i < a.length; i++) {
@@ -109,7 +104,6 @@ public class LSTMNetwork implements Serializable {
         }
         return result;
     }
-
 
     public void backpropagate(double[] input, double[] target, double learningRate) {
         double[] hiddenState = new double[hiddenSize];
@@ -145,10 +139,10 @@ public class LSTMNetwork implements Serializable {
             double[] dCellGateTemp = new double[hiddenSize];
 
             for (int i = 0; i < hiddenSize; i++) {
-                dOutputGateTemp[i] = dHiddenState[i] * relu(cellState[i]) * sigmoidDerivative(outputGate[i]);
+                dOutputGateTemp[i] = dHiddenState[i] * relu(cellState[i]) * reluDerivative(outputGate[i]);
                 dCellStateTemp[i] = dHiddenState[i] * outputGate[i] * reluDerivative(cellState[i]) + dCellState[i];
-                dInputGateTemp[i] = dCellStateTemp[i] * cellGate[i] * sigmoidDerivative(inputGate[i]);
-                dForgetGateTemp[i] = dCellStateTemp[i] * cellState[i] * sigmoidDerivative(forgetGate[i]);
+                dInputGateTemp[i] = dCellStateTemp[i] * cellGate[i] * reluDerivative(inputGate[i]);
+                dForgetGateTemp[i] = dCellStateTemp[i] * cellState[i] * reluDerivative(forgetGate[i]);
                 dCellGateTemp[i] = dCellStateTemp[i] * inputGate[i] * reluDerivative(cellGate[i]);
             }
 
@@ -189,19 +183,6 @@ public class LSTMNetwork implements Serializable {
         updateBiases(biasOutput, dBiasOutput, learningRate);
     }
 
-
-    private double[] sigmoid(double[] x) {
-        double[] result = new double[x.length];
-        for (int i = 0; i < x.length; i++) {
-            result[i] = 1 / (1 + Math.exp(-x[i]));
-        }
-        return result;
-    }
-
-    private double sigmoidDerivative(double x) {
-        return x * (1 - x);
-    }
-
     private double[] relu(double[] x) {
         double[] result = new double[x.length];
         for (int i = 0; i < x.length; i++) {
@@ -213,7 +194,6 @@ public class LSTMNetwork implements Serializable {
     private double relu(double x) {
         return Math.max(0, x);
     }
-
 
     private double reluDerivative(double x) {
         return x > 0 ? 1 : 0;
@@ -294,8 +274,10 @@ public class LSTMNetwork implements Serializable {
 
     public static LSTMNetwork loadModel(String filePath) {
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
+            System.out.println("Model loading");
             return (LSTMNetwork) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
+            System.out.println("Creating model");
             return null;
         }
     }

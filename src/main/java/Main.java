@@ -1,3 +1,4 @@
+
 import util.CustomChartUtils;
 import util.DataPreprocessor;
 import util.TechnicalIndicators;
@@ -8,18 +9,15 @@ import database.DatabaseHelper;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Main {
-    static String version = "v1";
+    static String version = "v3";
 
-    private static final String MODEL_FILE_PATH = "lstm_model"+version+".ser".replace("/", File.separator);
+    private static final String MODEL_FILE_PATH = "lstm_model" + version + ".ser";
     private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
     private static final String RESET = "\u001B[0m";
     private static final String GREEN = "\u001B[32m";
@@ -30,8 +28,7 @@ public class Main {
     static int inputSize = 8;
     static int outputSize = 1;
     static int epoch = 15;
-    static double training = 0.001;
-
+    static double trainingRate = 0.001;
 
     private static final List<Integer> epochList = new ArrayList<>();
     private static final List<Double> accuracyList = new ArrayList<>();
@@ -46,7 +43,7 @@ public class Main {
 
         LSTMNetwork lstm = LSTMNetwork.loadModel(MODEL_FILE_PATH);
         if (lstm == null) {
-            lstm = new LSTMNetwork(inputSize, hiddenSize,outputSize);
+            lstm = new LSTMNetwork(inputSize, hiddenSize, outputSize);
         }
 
         List<String> tableNames = dbHelper.getAllStockTableNames();
@@ -71,24 +68,14 @@ public class Main {
         LOGGER.log(Level.INFO, BLUE + "Training data size: " + trainData.length + RESET);
         LOGGER.log(Level.INFO, BLUE + "Test data size: " + testData.length + RESET);
 
-        trainModel(lstm, trainData, epoch,training);
+        trainModel(lstm, trainData, epoch, trainingRate);
 
         double accuracy = testModel(lstm, testData);
-        int n = 10;
-        int r = 0;
-//        while (accuracy < 0.05) {
-//            r++;
-//            LOGGER.log(Level.INFO, GREEN + "Accuracy below 5%, retraining model... with hiddenSize increase by: " + BLUE + n + " times. Retrain count: " + YELLOW + r + RESET);
-//            lstm = new LSTMNetwork(inputSize, hiddenSize*n,outputSize);
-//            trainModel(lstm, trainData, epoch,training);
-//            accuracy = testModel(lstm, testData);
-//            n *= 10;
-//        }
 
         lstm.saveModel(MODEL_FILE_PATH);
 
-        String accuracyChartDir = "charts"+version + File.separator + "accuracy";
-        String predictionChartDir = "charts"+version + File.separator + "predictions";
+        String accuracyChartDir = "charts" + version + File.separator + "accuracy";
+        String predictionChartDir = "charts" + version + File.separator + "predictions";
         createDirectory(accuracyChartDir);
         createDirectory(predictionChartDir);
 
@@ -98,7 +85,7 @@ public class Main {
             while (true) {
                 System.out.print("Enter the stock symbol to predict: ");
                 String stock = scanner.nextLine();
-                String stockSymbol = "daily_data_"+stock;
+                String stockSymbol = "daily_data_" + stock;
                 System.out.print("Enter the number of days for prediction: ");
                 int days = scanner.nextInt();
                 scanner.nextLine();
@@ -118,23 +105,40 @@ public class Main {
         LSTMTrainer trainer = new LSTMTrainer(lstm, learningRate);
         double prevAccuracy = 0;
         int sameCount = 0;
-        double decayRate = 0.9;
-        double clipThreshold = 1.0;
 
         for (int epoch = 0; epoch < epochs; epoch++) {
-            for (double[] data : trainData) {
-                double[] input = Arrays.copyOfRange(data, 0, data.length - 1);
-                double[] target = new double[]{data[data.length - 1]};
-                lstm.backpropagate(input, target, learningRate);
+            long startTime = System.currentTimeMillis();
+            int totalDataPoints = trainData.length;
+            int batchSize = 32; // Example batch size, adjust as needed
+            int batches = totalDataPoints / batchSize;
+
+            // Shuffle trainData
+            shuffleArray(trainData);
+
+            double totalLoss = 0;
+
+            // Train in batches
+            for (int batch = 0; batch < batches; batch++) {
+                double[][] batchData = Arrays.copyOfRange(trainData, batch * batchSize, (batch + 1) * batchSize);
+                for (double[] data : batchData) {
+                    double[] input = Arrays.copyOfRange(data, 0, data.length - 1);
+                    double[] target = new double[]{data[data.length - 1]};
+                    lstm.backpropagate(input, target, learningRate);
+                }
             }
 
-            learningRate *= decayRate;
-
+            // Calculate accuracy and loss
             double accuracy = testModel(lstm, trainData);
+            double epochLoss = calculateLoss(lstm, trainData);
+
+            // Logging
+            long endTime = System.currentTimeMillis();
+            long elapsedTime = endTime - startTime;
+
             epochList.add(epoch);
             accuracyList.add(accuracy);
 
-            LOGGER.log(Level.INFO, YELLOW + "Epoch " + epoch + ": Accuracy = " + accuracy + RESET);
+            LOGGER.log(Level.INFO, String.format(YELLOW + "Epoch %d: Accuracy = %.4f, Loss = %.6f, Time = %d ms" + RESET, epoch, accuracy, epochLoss, elapsedTime));
 
             // Check if accuracy is the same as previous epoch
             if (Math.abs(accuracy - prevAccuracy) < 0.01) {
@@ -145,7 +149,7 @@ public class Main {
 
             // If accuracy is the same for 2 consecutive epochs, reinitialize the model
             if (sameCount == 2) {
-                lstm = new LSTMNetwork(8, 20, 1);
+                lstm = new LSTMNetwork(inputSize, hiddenSize, outputSize);
                 trainer = new LSTMTrainer(lstm, learningRate);
                 sameCount = 0;
             }
@@ -162,11 +166,31 @@ public class Main {
             double[] output = lstm.forward(input, lstm.getHiddenState(), lstm.getCellState());
             double prediction = output[0];
             double actual = point[point.length - 1];
+
             if (Math.abs(prediction - actual) < 0.01 * actual) {
                 correctPredictions++;
             }
         }
         return (double) correctPredictions / testData.length;
+    }
+
+    private static double calculateLoss(LSTMNetwork lstm, double[][] data) {
+        double totalLoss = 0;
+        for (double[] point : data) {
+            double[] input = new double[point.length - 1];
+            System.arraycopy(point, 0, input, 0, point.length - 1);
+            double[] output = lstm.forward(input, lstm.getHiddenState(), lstm.getCellState());
+            double prediction = output[0];
+            double actual = point[point.length - 1];
+            totalLoss += Math.pow(actual - prediction, 2); // MSE loss
+        }
+        return totalLoss / data.length;
+    }
+
+    private static void shuffleArray(double[][] array) {
+        List<double[]> list = Arrays.asList(array);
+        Collections.shuffle(list);
+        list.toArray(array);
     }
 
     private static void createDirectory(String directory) {
@@ -195,6 +219,5 @@ public class Main {
         }
 
         CustomChartUtils.savePredictionChart("Predictions for " + stockSymbol, predictions, predictionChartDir + File.separator + stockSymbol + "_predictions.png", "Days", "Price");
-        LOGGER.log(Level.INFO, BLUE + "Predictions saved for " + stockSymbol + RESET);
     }
 }
