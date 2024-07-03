@@ -2,64 +2,47 @@ package lstm;
 
 import java.io.*;
 import java.util.Arrays;
+import java.util.Random;
 
 public class LSTMNetwork implements Serializable {
-    private int hiddenSize;
-    private double[][] weightsInputGate;
-    private double[][] weightsForgetGate;
-    private double[][] weightsOutputGate;
-    private double[][] weightsCellGate;
-    private double[][] weightsHiddenInputGate;
-    private double[][] weightsHiddenForgetGate;
-    private double[][] weightsHiddenOutputGate;
-    private double[][] weightsHiddenCellGate;
-    private double[][] weightsOutput;
-    private double[] biasInputGate;
-    private double[] biasForgetGate;
-    private double[] biasOutputGate;
-    private double[] biasCellGate;
-    private double[] biasOutput;
-
-    private double[] hiddenState;
-    private double[] cellState;
-
-    // Variables to store gate activations during forward pass for use in backpropagation
     private double[] inputGate;
     private double[] forgetGate;
     private double[] outputGate;
     private double[] cellGate;
+    private double[] hiddenState;
+    private double[] cellState;
+
+    private double[][] weightsInputGate;
+    private double[][] weightsForgetGate;
+    private double[][] weightsOutputGate;
+    private double[][] weightsCellGate;
+
+    private double[][] weightsHiddenInputGate;
+    private double[][] weightsHiddenForgetGate;
+    private double[][] weightsHiddenOutputGate;
+    private double[][] weightsHiddenCellGate;
+
+    private double[] biasInputGate;
+    private double[] biasForgetGate;
+    private double[] biasOutputGate;
+    private double[] biasCellGate;
+
+    private double[][] weightsOutput;
+    private double[] biasOutput;
+
+    private int inputSize;
+    private int hiddenSize;
+    private int outputSize;
 
     public LSTMNetwork(int inputSize, int hiddenSize, int outputSize) {
+        this.inputSize = inputSize;
         this.hiddenSize = hiddenSize;
+        this.outputSize = outputSize;
 
         // Initialize weights and biases
-        weightsInputGate = new double[hiddenSize][inputSize];
-        weightsForgetGate = new double[hiddenSize][inputSize];
-        weightsOutputGate = new double[hiddenSize][inputSize];
-        weightsCellGate = new double[hiddenSize][inputSize];
-        weightsHiddenInputGate = new double[hiddenSize][hiddenSize];
-        weightsHiddenForgetGate = new double[hiddenSize][hiddenSize];
-        weightsHiddenOutputGate = new double[hiddenSize][hiddenSize];
-        weightsHiddenCellGate = new double[hiddenSize][hiddenSize];
-        weightsOutput = new double[outputSize][hiddenSize];
+        initializeWeights();
 
-        biasInputGate = new double[hiddenSize];
-        biasForgetGate = new double[hiddenSize];
-        biasOutputGate = new double[hiddenSize];
-        biasCellGate = new double[hiddenSize];
-        biasOutput = new double[outputSize];
-
-        // Initialize weights and biases with small random values
-        initializeWeights(weightsInputGate);
-        initializeWeights(weightsForgetGate);
-        initializeWeights(weightsOutputGate);
-        initializeWeights(weightsCellGate);
-        initializeWeights(weightsHiddenInputGate);
-        initializeWeights(weightsHiddenForgetGate);
-        initializeWeights(weightsHiddenOutputGate);
-        initializeWeights(weightsHiddenCellGate);
-        initializeWeights(weightsOutput);
-
+        // Initialize biases with specific values
         initializeBiases(biasInputGate);
         initializeBiases(biasForgetGate);
         initializeBiases(biasOutputGate);
@@ -71,11 +54,61 @@ public class LSTMNetwork implements Serializable {
         cellState = new double[hiddenSize];
     }
 
-    private void initializeWeights(double[][] weights) {
-        for (int i = 0; i < weights.length; i++) {
-            for (int j = 0; j < weights[i].length; j++) {
-                weights[i][j] = Math.random() * 0.01;
+    private void initializeWeights() {
+        Random random = new Random();
+
+        weightsInputGate = new double[hiddenSize][inputSize];
+        weightsForgetGate = new double[hiddenSize][inputSize];
+        weightsOutputGate = new double[hiddenSize][inputSize];
+        weightsCellGate = new double[hiddenSize][inputSize];
+
+        weightsHiddenInputGate = new double[hiddenSize][hiddenSize];
+        weightsHiddenForgetGate = new double[hiddenSize][hiddenSize];
+        weightsHiddenOutputGate = new double[hiddenSize][hiddenSize];
+        weightsHiddenCellGate = new double[hiddenSize][hiddenSize];
+
+        biasInputGate = new double[hiddenSize];
+        biasForgetGate = new double[hiddenSize];
+        biasOutputGate = new double[hiddenSize];
+        biasCellGate = new double[hiddenSize];
+
+        weightsOutput = new double[outputSize][hiddenSize];
+        biasOutput = new double[outputSize];
+
+        hiddenState = new double[hiddenSize];
+        cellState = new double[hiddenSize];
+
+        // Initialize weights with small random values
+        for (int i = 0; i < hiddenSize; i++) {
+            for (int j = 0; j < inputSize; j++) {
+                weightsInputGate[i][j] = random.nextGaussian() * 0.01;
+                weightsForgetGate[i][j] = random.nextGaussian() * 0.01;
+                weightsOutputGate[i][j] = random.nextGaussian() * 0.01;
+                weightsCellGate[i][j] = random.nextGaussian() * 0.01;
             }
+        }
+
+        for (int i = 0; i < hiddenSize; i++) {
+            for (int j = 0; j < hiddenSize; j++) {
+                weightsHiddenInputGate[i][j] = random.nextGaussian() * 0.01;
+                weightsHiddenForgetGate[i][j] = random.nextGaussian() * 0.01;
+                weightsHiddenOutputGate[i][j] = random.nextGaussian() * 0.01;
+                weightsHiddenCellGate[i][j] = random.nextGaussian() * 0.01;
+            }
+        }
+
+        for (int i = 0; i < hiddenSize; i++) {
+            biasInputGate[i] = random.nextGaussian() * 0.01;
+            biasForgetGate[i] = random.nextGaussian() * 0.01;
+            biasOutputGate[i] = random.nextGaussian() * 0.01;
+            biasCellGate[i] = random.nextGaussian() * 0.01;
+        }
+
+        for (int i = 0; i < outputSize; i++) {
+            for (int j = 0; j < hiddenSize; j++) {
+                weightsOutput[i][j] = random.nextGaussian() * 0.01;
+            }
+            biasOutput[i] = random.nextGaussian() * 0.01;
         }
     }
 
@@ -89,12 +122,58 @@ public class LSTMNetwork implements Serializable {
         outputGate = relu(add(dotProduct(weightsOutputGate, input), dotProduct(weightsHiddenOutputGate, hiddenState), biasOutputGate));
         cellGate = relu(add(dotProduct(weightsCellGate, input), dotProduct(weightsHiddenCellGate, hiddenState), biasCellGate));
 
+        if (input.length != inputSize ||
+                forgetGate.length != hiddenSize ||
+                inputGate.length != hiddenSize ||
+                cellGate.length != hiddenSize ||
+                outputGate.length != hiddenSize) {
+            System.err.println("Error: Mismatched array lengths");
+            return null;
+        }
+
         for (int i = 0; i < cellState.length; i++) {
+
+//            System.out.println(i + " inputs : " + input[0] + " , " + input[1] + " , " + input[2] + " , " + input[3] + " , " + input[4] + " , " + input[5] + " , " + input[6] + " , " + input[7]);
+
+            if (Double.isNaN(forgetGate[i])) {
+                System.err.println("Error: NaN value encountered in forget gate at index: " + i);
+                return null;
+            }
+
+            if (Double.isNaN(inputGate[i])) {
+                System.err.println("Error: NaN value encountered in input gate at index: " + i);
+                return null;
+            }
+
+            if (Double.isNaN(cellGate[i])) {
+                System.err.println("Error: NaN value encountered in cell gate at index: " + i);
+                return null;
+            }
+
+            if (Double.isNaN(input[1])) {
+                System.err.println("Error: NaN value encountered in input at index: " + i);
+                return null;
+
+            }
+
             cellState[i] = forgetGate[i] * cellState[i] + inputGate[i] * cellGate[i];
+
+            if (Double.isNaN(cellState[i])) {
+                System.err.println("Error: NaN value encountered in cell state after update at index: " + i);
+                return null;
+            }
             hiddenState[i] = outputGate[i] * relu(cellState[i]);
         }
 
-        return relu(dotProduct(weightsOutput, hiddenState));
+        double[] output = dotProduct(weightsOutput, hiddenState);
+
+        // Adding null check for output
+        if (output == null) {
+            System.err.println("Error: Output is null after forward pass");
+            return null;
+        }
+
+        return output;
     }
 
     private double[] add(double[] a, double[] b, double[] c, double[] d) {
@@ -108,10 +187,15 @@ public class LSTMNetwork implements Serializable {
     public void backpropagate(double[] input, double[] target, double learningRate) {
         double[] hiddenState = new double[hiddenSize];
         double[] cellState = new double[hiddenSize];
-        double[] output = forward(input, hiddenState, cellState);
+        double[] output = forward(input, hiddenState, cellState);  // Ensure this returns a non-null value
+
+        if (output == null) {
+            System.err.println("Output is null");
+        }
 
         double[] error = new double[target.length];
         for (int i = 0; i < target.length; i++) {
+            assert output != null;
             error[i] = target[i] - output[i];
         }
 
@@ -144,6 +228,8 @@ public class LSTMNetwork implements Serializable {
                 dInputGateTemp[i] = dCellStateTemp[i] * cellGate[i] * reluDerivative(inputGate[i]);
                 dForgetGateTemp[i] = dCellStateTemp[i] * cellState[i] * reluDerivative(forgetGate[i]);
                 dCellGateTemp[i] = dCellStateTemp[i] * inputGate[i] * reluDerivative(cellGate[i]);
+
+                dCellState[i] += dCellStateTemp[i];
             }
 
             dInputGate = add(dInputGate, dInputGateTemp);
@@ -183,16 +269,27 @@ public class LSTMNetwork implements Serializable {
         updateBiases(biasOutput, dBiasOutput, learningRate);
     }
 
+
     private double[] relu(double[] x) {
-        double[] result = new double[x.length];
         for (int i = 0; i < x.length; i++) {
-            result[i] = Math.max(0, x[i]);
+            x[i] = Math.max(0, x[i]);
         }
-        return result;
+        return x;
     }
 
     private double relu(double x) {
         return Math.max(0, x);
+    }
+
+    private double[] tanh(double[] x) {
+        for (int i = 0; i < x.length; i++) {
+            x[i] = Math.tanh(x[i]);
+        }
+        return x;
+    }
+
+    private double tanhDerivative(double x) {
+        return 1 - Math.tanh(x) * Math.tanh(x);
     }
 
     private double reluDerivative(double x) {

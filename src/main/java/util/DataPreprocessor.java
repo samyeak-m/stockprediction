@@ -3,6 +3,7 @@ package util;
 import java.util.Arrays;
 
 public class DataPreprocessor {
+
     public static double[][] normalize(double[][] data) {
         // Calculate min and max values across columns
         double[] min = new double[data[0].length];
@@ -29,7 +30,7 @@ public class DataPreprocessor {
         double[][] normalizedData = new double[data.length][data[0].length];
         for (int i = 0; i < data.length; i++) {
             for (int j = 0; j < data[i].length; j++) {
-                normalizedData[i][j] = (data[i][j] - min[j]) / (max[j] - min[j]);
+                normalizedData[i][j] = (max[j] - min[j]) != 0 ? (data[i][j] - min[j]) / (max[j] - min[j]) : 0;
             }
         }
 
@@ -37,12 +38,14 @@ public class DataPreprocessor {
     }
 
     public static double[][][] preprocessData(double[][] data, double trainingSplit) {
-        int trainSize = (int) (data.length * trainingSplit);
-        double[][] trainData = new double[trainSize][data[0].length];
-        double[][] testData = new double[data.length - trainSize][data[0].length];
+        double[][] normalizedData = normalize(data);
 
-        System.arraycopy(data, 0, trainData, 0, trainSize);
-        System.arraycopy(data, trainSize, testData, 0, data.length - trainSize);
+        int trainSize = (int) (normalizedData.length * trainingSplit);
+        double[][] trainData = new double[trainSize][normalizedData[0].length];
+        double[][] testData = new double[normalizedData.length - trainSize][normalizedData[0].length];
+
+        System.arraycopy(normalizedData, 0, trainData, 0, trainSize);
+        System.arraycopy(normalizedData, trainSize, testData, 0, normalizedData.length - trainSize);
 
         return new double[][][]{trainData, testData};
     }

@@ -10,25 +10,23 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8a665f72-76be-45db-8f3b-b47e13b27452" name="Changes" comment="CHANGE : sigmoid function to relu">
-      <change afterPath="$PROJECT_DIR$/chartsv1/accuracy/model_accuracy.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/chartsv1/predictions/daily_data_ntc_predictions.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/chartsv2/accuracy/model_accuracy.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/chartsv2/predictions/daily_data_nimb_predictions.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/chartsv2/predictions/daily_data_ntc_predictions.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/chartsv3/accuracy/model_accuracy.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/chartsv3/predictions/daily_data_nimb_predictions.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/chartsv3/predictions/daily_data_ntc_predictions.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lstm_modelv1.ser" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lstm_modelv2.ser" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lstm_modelv3.ser" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/resources/chat.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/resources/chatcode.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/chartsv1/accuracy/model_accuracy.png" beforeDir="false" afterPath="$PROJECT_DIR$/chartsv1/accuracy/model_accuracy.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/chartsv1/predictions/daily_data_ntc_predictions.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/chartsv2/accuracy/model_accuracy.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/chartsv2/predictions/daily_data_nimb_predictions.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/chartsv2/predictions/daily_data_ntc_predictions.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/chartsv3/accuracy/model_accuracy.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/chartsv3/predictions/daily_data_nimb_predictions.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/chartsv3/predictions/daily_data_ntc_predictions.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/lstm_modelv1.ser" beforeDir="false" afterPath="$PROJECT_DIR$/lstm_modelv1.ser" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lstm_modelv2.ser" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/lstm_modelv3.ser" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Main.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/lstm/LSTMNetwork.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/lstm/LSTMNetwork.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/lstm/LSTMTrainer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/lstm/LSTMTrainer.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/util/DataPreprocessor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/util/DataPreprocessor.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/chat.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/chat.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -107,6 +105,7 @@
 }</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\samyeak\BCA\6thsem\project\test\stockprediction" />
       <recent name="D:\samyeak\BCA\6thsem\project\StockPrediction" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
@@ -235,6 +234,15 @@
       <workItem from="1719313016371" duration="114000" />
       <workItem from="1719365816826" duration="4351000" />
       <workItem from="1719453427002" duration="1683000" />
+      <workItem from="1719455968579" duration="4099000" />
+      <workItem from="1719752713152" duration="20000" />
+      <workItem from="1719752746321" duration="9369000" />
+      <workItem from="1719804684032" duration="648000" />
+      <workItem from="1719808084134" duration="2195000" />
+      <workItem from="1719888600778" duration="696000" />
+      <workItem from="1719889635912" duration="1885000" />
+      <workItem from="1719894788276" duration="1741000" />
+      <workItem from="1719975859388" duration="651000" />
     </task>
     <task id="LOCAL-00001" summary="CREATE : stock prediction usign lstm algorithm">
       <option name="closed" value="true" />
@@ -300,7 +308,15 @@
       <option name="project" value="LOCAL" />
       <updated>1719307612001</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="CHANGE : sigmoid function to relu">
+      <option name="closed" value="true" />
+      <created>1719456081693</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1719456081693</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -313,6 +329,16 @@
     <MESSAGE value="UPDATE : model training and testing of result with retesting until accurate prediction" />
     <MESSAGE value="CHANGE : sigmoid function to relu" />
     <option name="LAST_COMMIT_MESSAGE" value="CHANGE : sigmoid function to relu" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <breakpoint enabled="true" type="java-exception">
+          <properties class="java.lang.ArrayIndexOutOfBoundsException" package="java.lang" />
+          <option name="timeStamp" value="1" />
+        </breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

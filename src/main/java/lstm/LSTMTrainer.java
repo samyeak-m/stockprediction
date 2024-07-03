@@ -8,13 +8,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.logging.Level;
+import java.util.Arrays;
 
 public class LSTMTrainer {
     private final LSTMNetwork network;
-    private final double learningRate;
+    private double learningRate;
 
     private static final Logger LOGGER = Logger.getLogger(LSTMTrainer.class.getName());
-
 
     public LSTMTrainer(LSTMNetwork network, double learningRate) {
         this.network = network;
@@ -22,8 +22,16 @@ public class LSTMTrainer {
     }
 
     public void train(double[][] inputs, double[][] targets, int epochs) {
+        // Print data before normalization
+        System.out.println("Data before normalization:");
+        printData(inputs, targets);
+
         double[][] normalizedInputs = DataPreprocessor.normalize(inputs);
         double[][] normalizedTargets = DataPreprocessor.normalize(targets);
+
+        // Print data after normalization
+        System.out.println("Data after normalization:");
+        printData(normalizedInputs, normalizedTargets);
 
         double[][][] inputSplits = DataPreprocessor.preprocessData(normalizedInputs, 0.6);
         double[][][] targetSplits = DataPreprocessor.preprocessData(normalizedTargets, 0.6);
@@ -35,6 +43,22 @@ public class LSTMTrainer {
 
         List<Double> trainingLoss = new ArrayList<>();
         List<Double> validationLoss = new ArrayList<>();
+
+        for (int i = 0; i < trainInputs.length; i++) {
+            for (int j = 0; j < trainInputs[i].length; j++) {
+                if (Double.isNaN(trainInputs[i][j])) {
+                    LOGGER.warning("NaN value found in training input data at index [" + i + "][" + j + "]. Replacing with 0.");
+                    trainInputs[i][j] = 0;
+                }
+            }
+        }
+
+        for (int i = 0; i < trainTargets.length; i++) {
+            if (Double.isNaN(trainTargets[i][0])) {
+                LOGGER.warning("NaN value found in training target data at index [" + i + "][0]. Replacing with 0.");
+                trainTargets[i][0] = 0;
+            }
+        }
 
         for (int epoch = 0; epoch < epochs; epoch++) {
             double totalError = 0;
@@ -65,6 +89,10 @@ public class LSTMTrainer {
                 }
             }
 
+            if (epoch > 0 && epoch % 10 == 0) {
+                learningRate *= 0.9;
+            }
+
             trainingLoss.add(totalError / trainInputs.length);
             validationLoss.add(validate(testInputs, testTargets));
 
@@ -77,7 +105,6 @@ public class LSTMTrainer {
 
         CustomChartUtils.plotTrainingProgress(trainingLoss, validationLoss);
     }
-
 
     private double validate(double[][] inputs, double[][] targets) {
         double totalError = 0;
@@ -94,5 +121,11 @@ public class LSTMTrainer {
         }
 
         return totalError / inputs.length;
+    }
+
+    private void printData(double[][] inputs, double[][] targets) {
+        for (int i = 0; i < inputs.length; i++) {
+            System.out.println("Input " + i + ": " + Arrays.toString(inputs[i]) + " -> Target: " + Arrays.toString(targets[i]));
+        }
     }
 }

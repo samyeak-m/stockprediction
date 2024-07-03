@@ -1,4 +1,3 @@
-
 import util.CustomChartUtils;
 import util.DataPreprocessor;
 import util.TechnicalIndicators;
@@ -15,7 +14,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Main {
-    static String version = "v3";
+    static String version = "v1";
 
     private static final String MODEL_FILE_PATH = "lstm_model" + version + ".ser";
     private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
@@ -64,6 +63,7 @@ public class Main {
         double[][][] preprocessedData = DataPreprocessor.preprocessData(extendedData, 0.6);
         double[][] trainData = preprocessedData[0];
         double[][] testData = preprocessedData[1];
+
 
         LOGGER.log(Level.INFO, BLUE + "Training data size: " + trainData.length + RESET);
         LOGGER.log(Level.INFO, BLUE + "Test data size: " + testData.length + RESET);
@@ -124,6 +124,13 @@ public class Main {
                     double[] input = Arrays.copyOfRange(data, 0, data.length - 1);
                     double[] target = new double[]{data[data.length - 1]};
                     lstm.backpropagate(input, target, learningRate);
+
+                    double[] output = lstm.forward(input, lstm.getHiddenState(), lstm.getCellState());
+
+                    if (output == null) {
+                        LOGGER.severe("NaN value encountered during forward pass. Stopping training.");
+                        return; // Or implement other error handling logic
+                    }
                 }
             }
 
@@ -163,9 +170,16 @@ public class Main {
         for (double[] point : testData) {
             double[] input = new double[point.length - 1];
             System.arraycopy(point, 0, input, 0, point.length - 1);
+
             double[] output = lstm.forward(input, lstm.getHiddenState(), lstm.getCellState());
+            if (output == null) {
+                continue; // Skip this iteration if output is null
+            }
             double prediction = output[0];
             double actual = point[point.length - 1];
+
+            System.out.println("actual price     : " +actual);
+            System.out.println("prediction price : "+prediction);
 
             if (Math.abs(prediction - actual) < 0.01 * actual) {
                 correctPredictions++;

@@ -1,6 +1,6 @@
-i will give all thee codessssssssss of my project
+i will give you all the codessssssssss of my project
 dont use any library or frame work i want code in advance hardcore java, i dont need simplify logic version i need advance logic with implementation,
-can you give me all java code for stock prediction of nepse with lstm algorithm using relu activation function, if there is simgoid in my project replace it with relu
+you need to update my all java code for stock prediction of nepse with lstm algorithm using relu activation function, if there is simgoid in my project replace it with relu
 
 PROBLEM : in this project the prediction is always 0 actual     : 282.48085386990033
 prediction : 0.0
@@ -27,7 +27,7 @@ and also need to save prediction on database under table prediction
 
 do all necessary thing to get accuracy price predict and train model to always predict accurate price
 
-NOTE : i need full code with all thing using database name nepse_test, i need code which i can just copy and past in my project
+NOTE : i need full update code of my project with all thing using database name nepse_test, i need updated code which i can just copy and past in my project
 
 did you get it if you have any question ask
 
