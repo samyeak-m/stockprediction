@@ -113,7 +113,7 @@ public class LSTMNetwork implements Serializable {
     }
 
     private void initializeBiases(double[] biases) {
-        Arrays.fill(biases, 0.1);
+        Arrays.fill(biases, 0.01);
     }
 
     public double[] forward(double[] input, double[] hiddenState, double[] cellState) {
@@ -133,7 +133,7 @@ public class LSTMNetwork implements Serializable {
 
         for (int i = 0; i < cellState.length; i++) {
 
-//            System.out.println(i + " inputs : " + input[0] + " , " + input[1] + " , " + input[2] + " , " + input[3] + " , " + input[4] + " , " + input[5] + " , " + input[6] + " , " + input[7]);
+            System.out.println(i + " inputs : " + input[0] + " , " + input[1] + " , " + input[2] + " , " + input[3] + " , " + input[4] + " , " + input[5] + " , " + input[6] + " , " + input[7]+ " , " + input[8]);
 
             if (Double.isNaN(forgetGate[i])) {
                 System.err.println("Error: NaN value encountered in forget gate at index: " + i);

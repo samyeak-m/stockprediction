@@ -24,7 +24,7 @@ public class Main {
     private static final String YELLOW = "\u001B[33m";
 
     static int hiddenSize = 100;
-    static int inputSize = 8;
+    static int inputSize = 9;
     static int outputSize = 1;
     static int epoch = 15;
     static double trainingRate = 0.001;
@@ -84,8 +84,7 @@ public class Main {
         try (Scanner scanner = new Scanner(System.in)) {
             while (true) {
                 System.out.print("Enter the stock symbol to predict: ");
-                String stock = scanner.nextLine();
-                String stockSymbol = "daily_data_" + stock;
+                String stockSymbol = scanner.nextLine();
                 System.out.print("Enter the number of days for prediction: ");
                 int days = scanner.nextInt();
                 scanner.nextLine();

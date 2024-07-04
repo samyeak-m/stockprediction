@@ -9,24 +9,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8a665f72-76be-45db-8f3b-b47e13b27452" name="Changes" comment="CHANGE : sigmoid function to relu">
+    <list default="true" id="8a665f72-76be-45db-8f3b-b47e13b27452" name="Changes" comment="UPDATE : normalized inputs (database data) to 0 - 1">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/chartsv1/accuracy/model_accuracy.png" beforeDir="false" afterPath="$PROJECT_DIR$/chartsv1/accuracy/model_accuracy.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/chartsv1/predictions/daily_data_ntc_predictions.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/chartsv2/accuracy/model_accuracy.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/chartsv2/predictions/daily_data_nimb_predictions.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/chartsv2/predictions/daily_data_ntc_predictions.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/chartsv3/accuracy/model_accuracy.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/chartsv3/predictions/daily_data_nimb_predictions.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/chartsv3/predictions/daily_data_ntc_predictions.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lstm_modelv1.ser" beforeDir="false" afterPath="$PROJECT_DIR$/lstm_modelv1.ser" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lstm_modelv2.ser" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lstm_modelv3.ser" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/chartsv1/accuracy/model_accuracy.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/lstm_modelv1.ser" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/database/DatabaseHelper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/database/DatabaseHelper.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/lstm/LSTMNetwork.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/lstm/LSTMNetwork.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/lstm/LSTMTrainer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/lstm/LSTMTrainer.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/util/DataPreprocessor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/util/DataPreprocessor.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/chat.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/chat.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -242,7 +233,9 @@
       <workItem from="1719888600778" duration="696000" />
       <workItem from="1719889635912" duration="1885000" />
       <workItem from="1719894788276" duration="1741000" />
-      <workItem from="1719975859388" duration="651000" />
+      <workItem from="1719975859388" duration="2400000" />
+      <workItem from="1720004356289" duration="5315000" />
+      <workItem from="1720054916110" duration="3859000" />
     </task>
     <task id="LOCAL-00001" summary="CREATE : stock prediction usign lstm algorithm">
       <option name="closed" value="true" />
@@ -316,7 +309,15 @@
       <option name="project" value="LOCAL" />
       <updated>1719456081693</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="UPDATE : normalized inputs (database data) to 0 - 1">
+      <option name="closed" value="true" />
+      <created>1719976652110</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1719976652110</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -328,7 +329,8 @@
     <MESSAGE value="UPDATE : model training and save model" />
     <MESSAGE value="UPDATE : model training and testing of result with retesting until accurate prediction" />
     <MESSAGE value="CHANGE : sigmoid function to relu" />
-    <option name="LAST_COMMIT_MESSAGE" value="CHANGE : sigmoid function to relu" />
+    <MESSAGE value="UPDATE : normalized inputs (database data) to 0 - 1" />
+    <option name="LAST_COMMIT_MESSAGE" value="UPDATE : normalized inputs (database data) to 0 - 1" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

@@ -1,75 +1,94 @@
 package util;
 
-import java.util.Arrays;
+import java.util.Map;
 
 public class DataPreprocessor {
 
     public static double[][] normalize(double[][] data) {
-        // Calculate min and max values across columns
-        double[] min = new double[data[0].length];
-        double[] max = new double[data[0].length];
+        int columns = data[0].length;
+        double[] min = new double[columns];
+        double[] max = new double[columns];
 
-        for (int i = 0; i < data[0].length; i++) {
-            min[i] = Double.MAX_VALUE;
-            max[i] = Double.MIN_VALUE;
+        // Initialize min and max values
+        for (int j = 0; j < columns; j++) {
+            min[j] = Double.MAX_VALUE;
+            max[j] = Double.MIN_VALUE;
         }
 
-        // Find min and max values
+        // Find min and max values for each column
         for (double[] row : data) {
-            for (int i = 0; i < row.length; i++) {
-                if (row[i] < min[i]) {
-                    min[i] = row[i];
-                }
-                if (row[i] > max[i]) {
-                    max[i] = row[i];
+            for (int j = 0; j < columns; j++) {
+                if (!Double.isNaN(row[j])) {
+                    if (row[j] < min[j]) {
+                        min[j] = row[j];
+                    }
+                    if (row[j] > max[j]) {
+                        max[j] = row[j];
+                    }
                 }
             }
         }
 
         // Normalize data
-        double[][] normalizedData = new double[data.length][data[0].length];
+        double[][] normalizedData = new double[data.length][columns];
         for (int i = 0; i < data.length; i++) {
-            for (int j = 0; j < data[i].length; j++) {
-                normalizedData[i][j] = (max[j] - min[j]) != 0 ? (data[i][j] - min[j]) / (max[j] - min[j]) : 0;
+            for (int j = 0; j < columns; j++) {
+                if (!Double.isNaN(data[i][j]) && max[j] != min[j]) {
+                    normalizedData[i][j] = (data[i][j] - min[j]) / (max[j] - min[j]);
+                } else {
+                    normalizedData[i][j] = 0.0; // Or another default value
+                }
             }
         }
 
         return normalizedData;
     }
 
-    public static double[][][] preprocessData(double[][] data, double trainingSplit) {
-        double[][] normalizedData = normalize(data);
+    public static double[][][] preprocessData(double[][] data, double trainSplitRatio) {
+        int trainSize = (int) (data.length * trainSplitRatio);
+        int testSize = data.length - trainSize;
 
-        int trainSize = (int) (normalizedData.length * trainingSplit);
-        double[][] trainData = new double[trainSize][normalizedData[0].length];
-        double[][] testData = new double[normalizedData.length - trainSize][normalizedData[0].length];
+        double[][] trainData = new double[trainSize][data[0].length];
+        double[][] testData = new double[testSize][data[0].length];
 
-        System.arraycopy(normalizedData, 0, trainData, 0, trainSize);
-        System.arraycopy(normalizedData, trainSize, testData, 0, normalizedData.length - trainSize);
+        System.arraycopy(data, 0, trainData, 0, trainSize);
+        System.arraycopy(data, trainSize, testData, 0, testSize);
 
         return new double[][][]{trainData, testData};
     }
 
-    public static double[] removeNaNs(double[] data) {
-        return Arrays.stream(data).filter(Double::isFinite).toArray();
-    }
-
-    public static void checkDataForNaNs(double[] data) {
-        if (Arrays.stream(data).anyMatch(Double::isNaN)) {
-            throw new IllegalArgumentException("Data contains NaN values!");
-        }
-    }
-
     public static double[][] addFeatures(double[][] stockData, double[][] technicalIndicators) {
-        int numRows = stockData.length;
-        int numCols = stockData[0].length + technicalIndicators[0].length;
-        double[][] extendedData = new double[numRows][numCols];
+        double[][] extendedData = new double[stockData.length][stockData[0].length + technicalIndicators[0].length];
 
-        for (int i = 0; i < numRows; i++) {
+        for (int i = 0; i < stockData.length; i++) {
             System.arraycopy(stockData[i], 0, extendedData[i], 0, stockData[i].length);
             System.arraycopy(technicalIndicators[i], 0, extendedData[i], stockData[i].length, technicalIndicators[i].length);
         }
 
         return extendedData;
+    }
+
+    public static double[] normalizeTableNames(Map<String, Double> tableNameMap, String[] tableNames) {
+        double min = Double.MAX_VALUE;
+        double max = Double.MIN_VALUE;
+
+        double[] normalizedValues = new double[tableNames.length];
+
+        for (int i = 0; i < tableNames.length; i++) {
+            double value = tableNameMap.get(tableNames[i]);
+            if (value < min) {
+                min = value;
+            }
+            if (value > max) {
+                max = value;
+            }
+            normalizedValues[i] = value;
+        }
+
+        for (int i = 0; i < normalizedValues.length; i++) {
+            normalizedValues[i] = (normalizedValues[i] - min) / (max - min);
+        }
+
+        return normalizedValues;
     }
 }

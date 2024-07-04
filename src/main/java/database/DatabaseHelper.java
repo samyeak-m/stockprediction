@@ -3,10 +3,9 @@ package database;
 import util.PropertyLoader;
 
 import java.sql.*;
+import java.sql.Date;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -15,17 +14,32 @@ public class DatabaseHelper {
     private final String url;
     private final String username;
     private final String password;
+    private Map<String, Double> tableNameMap;
 
     public DatabaseHelper() {
         Properties properties = PropertyLoader.loadProperties("application.properties");
         this.url = properties.getProperty("db.url");
         this.username = properties.getProperty("db.username");
         this.password = properties.getProperty("db.password");
+        this.tableNameMap = new HashMap<>();
+        try {
+            generateTableNameMap();
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error generating table name map", e);
+        }
     }
 
     public Connection connect() throws SQLException {
-//        LOGGER.log(Level.INFO,"Connecting to the database...");
         return DriverManager.getConnection(url, username, password);
+    }
+
+    private void generateTableNameMap() throws SQLException {
+        List<String> tableNames = getAllStockTableNames();
+        double step = 1.0 / (tableNames.size() - 1);
+
+        for (int i = 0; i < tableNames.size(); i++) {
+            tableNameMap.put(tableNames.get(i), i * step);
+        }
     }
 
     public List<String> getAllStockTableNames() throws SQLException {
@@ -36,20 +50,19 @@ public class DatabaseHelper {
              PreparedStatement pstmt = conn.prepareStatement(query);
              ResultSet rs = pstmt.executeQuery()) {
             while (rs.next()) {
-                String tableName = rs.getString(1);
+                String tableName = rs.getString(1).replace("daily_data_", "");
                 tableNames.add(tableName);
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error fetching stock table names", e);
             throw e;
         }
-//        LOGGER.log(Level.INFO, "Fetched {0} stock table names", tableNames.size());
         return tableNames;
     }
 
     public List<double[]> loadStockData(String tableName) throws SQLException {
         List<double[]> stockData = new ArrayList<>();
-        String query = "SELECT date, close, high, low, open, volume, turnover FROM " + tableName + " ORDER BY date";
+        String query = "SELECT date, close, high, low, open, volume, turnover FROM daily_data_" + tableName + " ORDER BY date";
 
         try (Connection conn = connect();
              PreparedStatement pstmt = conn.prepareStatement(query);
@@ -65,13 +78,15 @@ public class DatabaseHelper {
 
                 double dateAsDouble = date.getTime();
 
-                stockData.add(new double[]{dateAsDouble, close, high, low, open, volume, turnover});
+                // Use the normalized value from the map
+                double normalizedTableName = tableNameMap.get(tableName);
+
+                stockData.add(new double[]{dateAsDouble, close, normalizedTableName, high, low, open, volume, turnover});
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error loading stock data for table " + tableName, e);
             throw e;
         }
-//        LOGGER.log(Level.INFO, "Loaded {0} rows of stock data from table {1}", new Object[]{stockData.size(), tableName});
         return stockData;
     }
 
