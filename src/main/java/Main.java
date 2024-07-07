@@ -14,7 +14,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Main {
-    static String version = "v1";
+    static String version = "v2";
 
     private static final String MODEL_FILE_PATH = "lstm_model" + version + ".ser";
     private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
@@ -63,7 +63,6 @@ public class Main {
         double[][][] preprocessedData = DataPreprocessor.preprocessData(extendedData, 0.6);
         double[][] trainData = preprocessedData[0];
         double[][] testData = preprocessedData[1];
-
 
         LOGGER.log(Level.INFO, BLUE + "Training data size: " + trainData.length + RESET);
         LOGGER.log(Level.INFO, BLUE + "Test data size: " + testData.length + RESET);
@@ -177,8 +176,8 @@ public class Main {
             double prediction = output[0];
             double actual = point[point.length - 1];
 
-            System.out.println("actual price     : " +actual);
-            System.out.println("prediction price : "+prediction);
+//            System.out.println("Actual price     : " + actual);
+//            System.out.println("Prediction price : " + prediction);
 
             if (Math.abs(prediction - actual) < 0.01 * actual) {
                 correctPredictions++;
@@ -228,9 +227,21 @@ public class Main {
         for (int i = 0; i < days; i++) {
             double[] currentInput = Arrays.copyOfRange(input[i], 0, input[i].length - 1);
             double[] output = lstm.forward(currentInput, lstm.getHiddenState(), lstm.getCellState());
+            if (output == null) {
+                continue; // Skip this iteration if output is null
+            }
             predictions[i] = output[0];
         }
 
-        CustomChartUtils.savePredictionChart("Predictions for " + stockSymbol, predictions, predictionChartDir + File.separator + stockSymbol + "_predictions.png", "Days", "Price");
+        double[] actualPrices = new double[days];
+        for (int i = 0; i < days; i++) {
+            actualPrices[i] = stockDataArray[stockDataArray.length - days + i][stockDataArray[0].length - 1];
+        }
+
+        CustomChartUtils.savePredictionChart("Stock Prediction: " + stockSymbol, actualPrices, predictions, predictionChartDir + File.separator + stockSymbol + "_predictions.png", "Days", "Price");
+
+        dbHelper.savePredictions(stockSymbol, predictions);
+
+        LOGGER.log(Level.INFO, GREEN + "Predictions for " + stockSymbol + " saved successfully!" + RESET);
     }
 }

@@ -68,7 +68,7 @@ public class DatabaseHelper {
              PreparedStatement pstmt = conn.prepareStatement(query);
              ResultSet rs = pstmt.executeQuery()) {
             while (rs.next()) {
-                java.sql.Date date = rs.getDate("date");
+                Date date = rs.getDate("date");
                 double close = rs.getDouble("close");
                 double high = rs.getDouble("high");
                 double low = rs.getDouble("low");
@@ -113,25 +113,30 @@ public class DatabaseHelper {
         }
     }
 
-    public void savePrediction(String stockSymbol, String predict, String pointChangeStr, double priceChange, double prediction, double actual, LocalDate today, LocalDate predictionDate) throws SQLException {
+    public void savePredictions(String stockSymbol, double[] predictions) throws SQLException {
         createPredictionsTableIfNotExists();
 
-        String query = "INSERT INTO predictions (stock_symbol, predict, point_change, price_change, prediction, actual, date, prediction_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO predictions (stock_symbol, prediction, prediction_date) VALUES (?, ?, ?)";
 
         try (Connection conn = connect();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setString(1, stockSymbol);
-            pstmt.setString(2, predict);
-            pstmt.setString(3, pointChangeStr);
-            pstmt.setDouble(4, priceChange);
-            pstmt.setDouble(5, prediction);
-            pstmt.setDouble(6, actual);
-            pstmt.setDate(7, Date.valueOf(today));
-            pstmt.setDate(8, Date.valueOf(predictionDate));
-            pstmt.executeUpdate();
-            LOGGER.log(Level.INFO, "Saved prediction for stock {0}", stockSymbol);
+
+            LocalDate predictionDate = LocalDate.now();
+
+            for (double prediction : predictions) {
+                pstmt.setString(1, stockSymbol);
+                pstmt.setDouble(2, prediction);
+                pstmt.setDate(3, Date.valueOf(predictionDate));
+                pstmt.addBatch();
+
+                // Increment the date for next prediction
+                predictionDate = predictionDate.plusDays(1);
+            }
+
+            pstmt.executeBatch();
+            LOGGER.log(Level.INFO, "Saved predictions for stock {0}", stockSymbol);
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error saving prediction for stock " + stockSymbol, e);
+            LOGGER.log(Level.SEVERE, "Error saving predictions for stock " + stockSymbol, e);
             throw e;
         }
     }

@@ -34,6 +34,14 @@ public class LSTMNetwork implements Serializable {
     private int hiddenSize;
     private int outputSize;
 
+    private double[] dHiddenState;
+    private double[] dCellState;
+    private double[] dInputGate;
+    private double[] dForgetGate;
+    private double[] dOutputGate;
+    private double[] dCellGate;
+    private double[] dOutput;
+
     public LSTMNetwork(int inputSize, int hiddenSize, int outputSize) {
         this.inputSize = inputSize;
         this.hiddenSize = hiddenSize;
@@ -75,40 +83,30 @@ public class LSTMNetwork implements Serializable {
         weightsOutput = new double[outputSize][hiddenSize];
         biasOutput = new double[outputSize];
 
-        hiddenState = new double[hiddenSize];
-        cellState = new double[hiddenSize];
-
         // Initialize weights with small random values
         for (int i = 0; i < hiddenSize; i++) {
             for (int j = 0; j < inputSize; j++) {
-                weightsInputGate[i][j] = random.nextGaussian() * 0.01;
-                weightsForgetGate[i][j] = random.nextGaussian() * 0.01;
-                weightsOutputGate[i][j] = random.nextGaussian() * 0.01;
-                weightsCellGate[i][j] = random.nextGaussian() * 0.01;
+                weightsInputGate[i][j] = random.nextGaussian() * Math.sqrt(2.0 / (inputSize + hiddenSize));
+                weightsForgetGate[i][j] = random.nextGaussian() * Math.sqrt(2.0 / (inputSize + hiddenSize));
+                weightsOutputGate[i][j] = random.nextGaussian() * Math.sqrt(2.0 / (inputSize + hiddenSize));
+                weightsCellGate[i][j] = random.nextGaussian() * Math.sqrt(2.0 / (inputSize + hiddenSize));
             }
         }
 
         for (int i = 0; i < hiddenSize; i++) {
             for (int j = 0; j < hiddenSize; j++) {
-                weightsHiddenInputGate[i][j] = random.nextGaussian() * 0.01;
-                weightsHiddenForgetGate[i][j] = random.nextGaussian() * 0.01;
-                weightsHiddenOutputGate[i][j] = random.nextGaussian() * 0.01;
-                weightsHiddenCellGate[i][j] = random.nextGaussian() * 0.01;
+                weightsHiddenInputGate[i][j] = random.nextGaussian() * Math.sqrt(2.0 / (hiddenSize + hiddenSize));
+                weightsHiddenForgetGate[i][j] = random.nextGaussian() * Math.sqrt(2.0 / (hiddenSize + hiddenSize));
+                weightsHiddenOutputGate[i][j] = random.nextGaussian() * Math.sqrt(2.0 / (hiddenSize + hiddenSize));
+                weightsHiddenCellGate[i][j] = random.nextGaussian() * Math.sqrt(2.0 / (hiddenSize + hiddenSize));
             }
-        }
-
-        for (int i = 0; i < hiddenSize; i++) {
-            biasInputGate[i] = random.nextGaussian() * 0.01;
-            biasForgetGate[i] = random.nextGaussian() * 0.01;
-            biasOutputGate[i] = random.nextGaussian() * 0.01;
-            biasCellGate[i] = random.nextGaussian() * 0.01;
         }
 
         for (int i = 0; i < outputSize; i++) {
             for (int j = 0; j < hiddenSize; j++) {
-                weightsOutput[i][j] = random.nextGaussian() * 0.01;
+                weightsOutput[i][j] = random.nextGaussian() * Math.sqrt(2.0 / (hiddenSize + outputSize));
             }
-            biasOutput[i] = random.nextGaussian() * 0.01;
+            biasOutput[i] = random.nextGaussian() * Math.sqrt(2.0 / (hiddenSize + outputSize));
         }
     }
 
@@ -116,64 +114,50 @@ public class LSTMNetwork implements Serializable {
         Arrays.fill(biases, 0.01);
     }
 
-    public double[] forward(double[] input, double[] hiddenState, double[] cellState) {
-        inputGate = relu(add(dotProduct(weightsInputGate, input), dotProduct(weightsHiddenInputGate, hiddenState), biasInputGate));
-        forgetGate = relu(add(dotProduct(weightsForgetGate, input), dotProduct(weightsHiddenForgetGate, hiddenState), biasForgetGate));
-        outputGate = relu(add(dotProduct(weightsOutputGate, input), dotProduct(weightsHiddenOutputGate, hiddenState), biasOutputGate));
-        cellGate = relu(add(dotProduct(weightsCellGate, input), dotProduct(weightsHiddenCellGate, hiddenState), biasCellGate));
+    private double leakyRelu(double x) {
+        return x > 0 ? x : 0.01 * x;
+    }
 
-        if (input.length != inputSize ||
-                forgetGate.length != hiddenSize ||
-                inputGate.length != hiddenSize ||
-                cellGate.length != hiddenSize ||
-                outputGate.length != hiddenSize) {
-            System.err.println("Error: Mismatched array lengths");
-            return null;
+    private double[] leakyRelu(double[] x) {
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; i++) {
+            result[i] = leakyRelu(x[i]);
         }
+        return result;
+    }
+
+    private double leakyReluDerivative(double x) {
+        return x > 0 ? 1 : 0.01;
+    }
+
+    private double[] leakyReluDerivative(double[] x) {
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; i++) {
+            result[i] = leakyReluDerivative(x[i]);
+        }
+        return result;
+    }
+
+    public double[] forward(double[] input, double[] hiddenState, double[] cellState) {
+        inputGate = leakyRelu(add(dotProduct(weightsInputGate, input), dotProduct(weightsHiddenInputGate, hiddenState), biasInputGate));
+        forgetGate = leakyRelu(add(dotProduct(weightsForgetGate, input), dotProduct(weightsHiddenForgetGate, hiddenState), biasForgetGate));
+        outputGate = leakyRelu(add(dotProduct(weightsOutputGate, input), dotProduct(weightsHiddenOutputGate, hiddenState), biasOutputGate));
+        cellGate = leakyRelu(add(dotProduct(weightsCellGate, input), dotProduct(weightsHiddenCellGate, hiddenState), biasCellGate));
 
         for (int i = 0; i < cellState.length; i++) {
-
-            System.out.println(i + " inputs : " + input[0] + " , " + input[1] + " , " + input[2] + " , " + input[3] + " , " + input[4] + " , " + input[5] + " , " + input[6] + " , " + input[7]+ " , " + input[8]);
-
-            if (Double.isNaN(forgetGate[i])) {
-                System.err.println("Error: NaN value encountered in forget gate at index: " + i);
-                return null;
-            }
-
-            if (Double.isNaN(inputGate[i])) {
-                System.err.println("Error: NaN value encountered in input gate at index: " + i);
-                return null;
-            }
-
-            if (Double.isNaN(cellGate[i])) {
-                System.err.println("Error: NaN value encountered in cell gate at index: " + i);
-                return null;
-            }
-
-            if (Double.isNaN(input[1])) {
-                System.err.println("Error: NaN value encountered in input at index: " + i);
-                return null;
-
-            }
-
             cellState[i] = forgetGate[i] * cellState[i] + inputGate[i] * cellGate[i];
-
-            if (Double.isNaN(cellState[i])) {
-                System.err.println("Error: NaN value encountered in cell state after update at index: " + i);
-                return null;
-            }
-            hiddenState[i] = outputGate[i] * relu(cellState[i]);
+            hiddenState[i] = outputGate[i] * leakyRelu(cellState[i]);
         }
 
-        double[] output = dotProduct(weightsOutput, hiddenState);
+        return dotProduct(weightsOutput, hiddenState);
+    }
 
-        // Adding null check for output
-        if (output == null) {
-            System.err.println("Error: Output is null after forward pass");
-            return null;
+    private double[] add(double[] a, double[] b, double[] c) {
+        double[] result = new double[a.length];
+        for (int i = 0; i < a.length; i++) {
+            result[i] = a[i] + b[i] + c[i];
         }
-
-        return output;
+        return result;
     }
 
     private double[] add(double[] a, double[] b, double[] c, double[] d) {
@@ -185,28 +169,29 @@ public class LSTMNetwork implements Serializable {
     }
 
     public void backpropagate(double[] input, double[] target, double learningRate) {
+        dHiddenState = new double[hiddenSize];
+        dCellState = new double[hiddenSize];
+        dInputGate = new double[hiddenSize];
+        dForgetGate = new double[hiddenSize];
+        dOutputGate = new double[hiddenSize];
+        dCellGate = new double[hiddenSize];
+        dOutput = new double[outputSize];
+
         double[] hiddenState = new double[hiddenSize];
         double[] cellState = new double[hiddenSize];
-        double[] output = forward(input, hiddenState, cellState);  // Ensure this returns a non-null value
-
-        if (output == null) {
-            System.err.println("Output is null");
-        }
+        double[] output = forward(input, hiddenState, cellState);
 
         double[] error = new double[target.length];
         for (int i = 0; i < target.length; i++) {
-            assert output != null;
             error[i] = target[i] - output[i];
         }
 
-        double[] dOutput = new double[output.length];
         for (int i = 0; i < output.length; i++) {
-            dOutput[i] = -2 * error[i] * reluDerivative(output[i]);
+            dOutput[i] = -2 * error[i] * leakyReluDerivative(output[i]);
         }
 
         double[][] dWeightsOutput = outerProduct(dOutput, hiddenState);
         double[] dBiasOutput = dOutput.clone();
-
         double[] dHiddenState = dotProductTranspose(weightsOutput, dOutput);
 
         double[] dCellState = new double[hiddenSize];
@@ -215,146 +200,87 @@ public class LSTMNetwork implements Serializable {
         double[] dOutputGate = new double[hiddenSize];
         double[] dCellGate = new double[hiddenSize];
 
-        for (int t = hiddenSize - 1; t >= 0; t--) {
-            double[] dOutputGateTemp = new double[hiddenSize];
-            double[] dCellStateTemp = new double[hiddenSize];
-            double[] dInputGateTemp = new double[hiddenSize];
-            double[] dForgetGateTemp = new double[hiddenSize];
-            double[] dCellGateTemp = new double[hiddenSize];
-
-            for (int i = 0; i < hiddenSize; i++) {
-                dOutputGateTemp[i] = dHiddenState[i] * relu(cellState[i]) * reluDerivative(outputGate[i]);
-                dCellStateTemp[i] = dHiddenState[i] * outputGate[i] * reluDerivative(cellState[i]) + dCellState[i];
-                dInputGateTemp[i] = dCellStateTemp[i] * cellGate[i] * reluDerivative(inputGate[i]);
-                dForgetGateTemp[i] = dCellStateTemp[i] * cellState[i] * reluDerivative(forgetGate[i]);
-                dCellGateTemp[i] = dCellStateTemp[i] * inputGate[i] * reluDerivative(cellGate[i]);
-
-                dCellState[i] += dCellStateTemp[i];
-            }
-
-            dInputGate = add(dInputGate, dInputGateTemp);
-            dForgetGate = add(dForgetGate, dForgetGateTemp);
-            dOutputGate = add(dOutputGate, dOutputGateTemp);
-            dCellGate = add(dCellGate, dCellGateTemp);
-
-            dHiddenState = add(dotProductTranspose(weightsHiddenInputGate, dInputGateTemp),
-                    dotProductTranspose(weightsHiddenForgetGate, dForgetGateTemp),
-                    dotProductTranspose(weightsHiddenOutputGate, dOutputGateTemp),
-                    dotProductTranspose(weightsHiddenCellGate, dCellGateTemp));
+        for (int i = 0; i < hiddenSize; i++) {
+            dOutputGate[i] = dHiddenState[i] * leakyRelu(cellState[i]) * leakyReluDerivative(outputGate[i]);
+            dCellState[i] += dHiddenState[i] * outputGate[i] * leakyReluDerivative(cellState[i]);
+            dInputGate[i] = dCellState[i] * cellGate[i] * leakyReluDerivative(inputGate[i]);
+            dForgetGate[i] = dCellState[i] * cellState[i] * leakyReluDerivative(forgetGate[i]);
+            dCellGate[i] = dCellState[i] * inputGate[i] * leakyReluDerivative(cellGate[i]);
         }
 
         double[][] dWeightsInputGate = outerProduct(dInputGate, input);
         double[][] dWeightsForgetGate = outerProduct(dForgetGate, input);
         double[][] dWeightsOutputGate = outerProduct(dOutputGate, input);
         double[][] dWeightsCellGate = outerProduct(dCellGate, input);
+
         double[][] dWeightsHiddenInputGate = outerProduct(dInputGate, hiddenState);
         double[][] dWeightsHiddenForgetGate = outerProduct(dForgetGate, hiddenState);
         double[][] dWeightsHiddenOutputGate = outerProduct(dOutputGate, hiddenState);
         double[][] dWeightsHiddenCellGate = outerProduct(dCellGate, hiddenState);
 
-        updateWeights(weightsInputGate, dWeightsInputGate, learningRate);
-        updateWeights(weightsForgetGate, dWeightsForgetGate, learningRate);
-        updateWeights(weightsOutputGate, dWeightsOutputGate, learningRate);
-        updateWeights(weightsCellGate, dWeightsCellGate, learningRate);
-        updateWeights(weightsHiddenInputGate, dWeightsHiddenInputGate, learningRate);
-        updateWeights(weightsHiddenForgetGate, dWeightsHiddenForgetGate, learningRate);
-        updateWeights(weightsHiddenOutputGate, dWeightsHiddenOutputGate, learningRate);
-        updateWeights(weightsHiddenCellGate, dWeightsHiddenCellGate, learningRate);
-        updateWeights(weightsOutput, dWeightsOutput, learningRate);
-
-        updateBiases(biasInputGate, dInputGate, learningRate);
-        updateBiases(biasForgetGate, dForgetGate, learningRate);
-        updateBiases(biasOutputGate, dOutputGate, learningRate);
-        updateBiases(biasCellGate, dCellGate, learningRate);
-        updateBiases(biasOutput, dBiasOutput, learningRate);
-    }
-
-
-    private double[] relu(double[] x) {
-        for (int i = 0; i < x.length; i++) {
-            x[i] = Math.max(0, x[i]);
+        for (int i = 0; i < hiddenSize; i++) {
+            for (int j = 0; j < inputSize; j++) {
+                weightsInputGate[i][j] -= learningRate * dWeightsInputGate[i][j];
+                weightsForgetGate[i][j] -= learningRate * dWeightsForgetGate[i][j];
+                weightsOutputGate[i][j] -= learningRate * dWeightsOutputGate[i][j];
+                weightsCellGate[i][j] -= learningRate * dWeightsCellGate[i][j];
+            }
         }
-        return x;
-    }
 
-    private double relu(double x) {
-        return Math.max(0, x);
-    }
-
-    private double[] tanh(double[] x) {
-        for (int i = 0; i < x.length; i++) {
-            x[i] = Math.tanh(x[i]);
+        for (int i = 0; i < hiddenSize; i++) {
+            for (int j = 0; j < hiddenSize; j++) {
+                weightsHiddenInputGate[i][j] -= learningRate * dWeightsHiddenInputGate[i][j];
+                weightsHiddenForgetGate[i][j] -= learningRate * dWeightsHiddenForgetGate[i][j];
+                weightsHiddenOutputGate[i][j] -= learningRate * dWeightsHiddenOutputGate[i][j];
+                weightsHiddenCellGate[i][j] -= learningRate * dWeightsHiddenCellGate[i][j];
+            }
         }
-        return x;
+
+        for (int i = 0; i < hiddenSize; i++) {
+            biasInputGate[i] -= learningRate * dInputGate[i];
+            biasForgetGate[i] -= learningRate * dForgetGate[i];
+            biasOutputGate[i] -= learningRate * dOutputGate[i];
+            biasCellGate[i] -= learningRate * dCellGate[i];
+        }
+
+        for (int i = 0; i < outputSize; i++) {
+            for (int j = 0; j < hiddenSize; j++) {
+                weightsOutput[i][j] -= learningRate * dWeightsOutput[i][j];
+            }
+            biasOutput[i] -= learningRate * dBiasOutput[i];
+        }
     }
 
-    private double tanhDerivative(double x) {
-        return 1 - Math.tanh(x) * Math.tanh(x);
-    }
-
-    private double reluDerivative(double x) {
-        return x > 0 ? 1 : 0;
-    }
-
-    private double[] dotProduct(double[][] weights, double[] inputs) {
-        double[] result = new double[weights.length];
-        for (int i = 0; i < weights.length; i++) {
-            for (int j = 0; j < inputs.length; j++) {
-                result[i] += weights[i][j] * inputs[j];
+    private double[] dotProduct(double[][] matrix, double[] vector) {
+        double[] result = new double[matrix.length];
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[i].length; j++) {
+                result[i] += matrix[i][j] * vector[j];
             }
         }
         return result;
     }
 
-    private double[] dotProductTranspose(double[][] weights, double[] dOutput) {
-        double[] result = new double[weights[0].length];
-        for (int i = 0; i < weights[0].length; i++) {
-            for (int j = 0; j < dOutput.length; j++) {
-                result[i] += dOutput[j] * weights[j][i];
+    private double[] dotProductTranspose(double[][] matrix, double[] vector) {
+        double[] result = new double[matrix[0].length];
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[i].length; j++) {
+                result[j] += matrix[i][j] * vector[i];
             }
         }
         return result;
     }
 
-    private double[][] outerProduct(double[] vec1, double[] vec2) {
-        double[][] result = new double[vec1.length][vec2.length];
-        for (int i = 0; i < vec1.length; i++) {
-            for (int j = 0; j < vec2.length; j++) {
-                result[i][j] = vec1[i] * vec2[j];
+    private double[][] outerProduct(double[] vectorA, double[] vectorB) {
+        double[][] result = new double[vectorA.length][vectorB.length];
+        for (int i = 0; i < vectorA.length; i++) {
+            for (int j = 0; j < vectorB.length; j++) {
+                result[i][j] = vectorA[i] * vectorB[j];
             }
         }
         return result;
     }
 
-    private double[] add(double[] a, double[] b) {
-        double[] result = new double[a.length];
-        for (int i = 0; i < a.length; i++) {
-            result[i] = a[i] + b[i];
-        }
-        return result;
-    }
-
-    private double[] add(double[] a, double[] b, double[] c) {
-        double[] result = new double[a.length];
-        for (int i = 0; i < a.length; i++) {
-            result[i] = a[i] + b[i] + c[i];
-        }
-        return result;
-    }
-
-    private void updateWeights(double[][] weights, double[][] dWeights, double learningRate) {
-        for (int i = 0; i < weights.length; i++) {
-            for (int j = 0; j < weights[i].length; j++) {
-                weights[i][j] -= learningRate * dWeights[i][j];
-            }
-        }
-    }
-
-    private void updateBiases(double[] biases, double[] dBiases, double learningRate) {
-        for (int i = 0; i < biases.length; i++) {
-            biases[i] -= learningRate * dBiases[i];
-        }
-    }
 
     public void resetState() {
         hiddenState = new double[hiddenSize];
