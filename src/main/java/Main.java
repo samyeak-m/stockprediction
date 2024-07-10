@@ -14,7 +14,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Main {
-    static String version = "v2";
+    static String version = "v1";
 
     private static final String MODEL_FILE_PATH = "lstm_model" + version + ".ser";
     private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
@@ -55,7 +55,7 @@ public class Main {
         double[][] stockDataArray = allStockData.toArray(new double[0][]);
 
         // Calculate technical indicators
-        double[][] technicalIndicators = TechnicalIndicators.calculate(stockDataArray, 20, 20);
+        double[][] technicalIndicators = TechnicalIndicators.calculate(stockDataArray, 1, 20);
 
         // Combine stock data with technical indicators
         double[][] extendedData = DataPreprocessor.addFeatures(stockDataArray, technicalIndicators);
@@ -215,7 +215,7 @@ public class Main {
     private static void predictAndSave(DatabaseHelper dbHelper, LSTMNetwork lstm, String stockSymbol, int days, String predictionChartDir) throws SQLException, IOException {
         List<double[]> stockData = dbHelper.loadStockData(stockSymbol);
         double[][] stockDataArray = stockData.toArray(new double[0][]);
-        double[][] technicalIndicators = TechnicalIndicators.calculate(stockDataArray, 20, 20);
+        double[][] technicalIndicators = TechnicalIndicators.calculate(stockDataArray, 1, 20);
         double[][] extendedData = DataPreprocessor.addFeatures(stockDataArray, technicalIndicators);
 
         double[][] input = new double[days][extendedData[0].length];
@@ -225,10 +225,10 @@ public class Main {
 
         double[] predictions = new double[days];
         for (int i = 0; i < days; i++) {
-            double[] currentInput = Arrays.copyOfRange(input[i], 0, input[i].length - 1);
-            double[] output = lstm.forward(currentInput, lstm.getHiddenState(), lstm.getCellState());
+            double[] output = lstm.forward(input[i], lstm.getHiddenState(), lstm.getCellState());
             if (output == null) {
-                continue; // Skip this iteration if output is null
+                LOGGER.severe("NaN value encountered during forward pass. Stopping prediction.");
+                return; // Or implement other error handling logic
             }
             predictions[i] = output[0];
         }
@@ -238,10 +238,22 @@ public class Main {
             actualPrices[i] = stockDataArray[stockDataArray.length - days + i][stockDataArray[0].length - 1];
         }
 
-        CustomChartUtils.savePredictionChart("Stock Prediction: " + stockSymbol, actualPrices, predictions, predictionChartDir + File.separator + stockSymbol + "_predictions.png", "Days", "Price");
+        CustomChartUtils.savePredictionChart(
+                "Stock Prediction: " + stockSymbol,
+                actualPrices,
+                predictions,
+                predictionChartDir + File.separator + stockSymbol + "_predictions.png",
+                "Days",
+                "Price"
+        );
 
-        dbHelper.savePredictions(stockSymbol, predictions);
+        System.out.println("Data to DB for stock: " + stockSymbol);
+        System.out.println("Predictions: " + Arrays.toString(predictions));
+        System.out.println("Actual Prices: " + Arrays.toString(actualPrices));
+
+        dbHelper.savePredictions(stockSymbol, predictions, actualPrices);
 
         LOGGER.log(Level.INFO, GREEN + "Predictions for " + stockSymbol + " saved successfully!" + RESET);
     }
+
 }

@@ -113,30 +113,38 @@ public class DatabaseHelper {
         }
     }
 
-    public void savePredictions(String stockSymbol, double[] predictions) throws SQLException {
+    public void savePredictions(String stockSymbol, double[] predictions, double[] actuals) throws SQLException {
         createPredictionsTableIfNotExists();
 
-        String query = "INSERT INTO predictions (stock_symbol, prediction, prediction_date) VALUES (?, ?, ?)";
+        System.out.println("prediction : "+predictions+", actuals : "+actuals+", symbol : "+stockSymbol);
+
+        String query = "INSERT INTO predictions (stock_symbol, prediction, actual, point_change, price_change, prediction_date) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = connect();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
-
+            conn.setAutoCommit(false);
             LocalDate predictionDate = LocalDate.now();
 
-            for (double prediction : predictions) {
+            for (int i = 0; i < predictions.length; i++) {
+                double prediction = predictions[i];
+                double actual = actuals[i];
+                double pointChange = prediction - actual;
+                double priceChange = pointChange / actual;
+
                 pstmt.setString(1, stockSymbol);
                 pstmt.setDouble(2, prediction);
-                pstmt.setDate(3, Date.valueOf(predictionDate));
+                pstmt.setDouble(3, actual);
+                pstmt.setDouble(4, pointChange);
+                pstmt.setDouble(5, priceChange);
+                pstmt.setDate(6, Date.valueOf(predictionDate));
                 pstmt.addBatch();
-
-                // Increment the date for next prediction
-                predictionDate = predictionDate.plusDays(1);
             }
 
             pstmt.executeBatch();
-            LOGGER.log(Level.INFO, "Saved predictions for stock {0}", stockSymbol);
+            conn.commit();
+            LOGGER.log(Level.INFO, "Saved predictions for stock symbol: " + stockSymbol);
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error saving predictions for stock " + stockSymbol, e);
+            LOGGER.log(Level.SEVERE, "Error saving predictions for stock symbol: " + stockSymbol, e);
             throw e;
         }
     }

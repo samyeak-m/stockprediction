@@ -9,12 +9,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8a665f72-76be-45db-8f3b-b47e13b27452" name="Changes" comment="UPDATE : normalized stock symbol  to 0 - 1">
+    <list default="true" id="8a665f72-76be-45db-8f3b-b47e13b27452" name="Changes" comment="UPDATE : array out of bond fix">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Main.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/database/DatabaseHelper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/database/DatabaseHelper.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/lstm/LSTMNetwork.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/lstm/LSTMNetwork.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/util/CustomChartUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/util/CustomChartUtils.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/util/DataPreprocessor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/util/DataPreprocessor.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -238,7 +237,12 @@
       <workItem from="1720144521807" duration="6035000" />
       <workItem from="1720152790102" duration="2812000" />
       <workItem from="1720339297222" duration="114000" />
-      <workItem from="1720339576547" duration="4761000" />
+      <workItem from="1720339576547" duration="8518000" />
+      <workItem from="1720409861536" duration="22000" />
+      <workItem from="1720423481427" duration="10811000" />
+      <workItem from="1720495425300" duration="28000" />
+      <workItem from="1720495600890" duration="5093000" />
+      <workItem from="1720509365835" duration="9303000" />
     </task>
     <task id="LOCAL-00001" summary="CREATE : stock prediction usign lstm algorithm">
       <option name="closed" value="true" />
@@ -328,7 +332,15 @@
       <option name="project" value="LOCAL" />
       <updated>1720059076774</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="UPDATE : array out of bond fix">
+      <option name="closed" value="true" />
+      <created>1720345893447</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1720345893447</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -342,7 +354,8 @@
     <MESSAGE value="CHANGE : sigmoid function to relu" />
     <MESSAGE value="UPDATE : normalized inputs (database data) to 0 - 1" />
     <MESSAGE value="UPDATE : normalized stock symbol  to 0 - 1" />
-    <option name="LAST_COMMIT_MESSAGE" value="UPDATE : normalized stock symbol  to 0 - 1" />
+    <MESSAGE value="UPDATE : array out of bond fix" />
+    <option name="LAST_COMMIT_MESSAGE" value="UPDATE : array out of bond fix" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -353,6 +366,12 @@
         </breakpoint>
       </breakpoints>
     </breakpoint-manager>
+    <watches-manager>
+      <configuration name="Application">
+        <watch expression="matrix[i][j]" language="JAVA" />
+        <watch expression="matrix[i][j]" language="JAVA" />
+      </configuration>
+    </watches-manager>
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

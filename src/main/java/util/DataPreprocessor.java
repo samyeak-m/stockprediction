@@ -66,6 +66,15 @@ public class DataPreprocessor {
             System.arraycopy(technicalIndicators[i], 0, extendedData[i], stockData[i].length, technicalIndicators[i].length);
         }
 
+//        print2DArray(extendedData);
+
         return extendedData;
     }
+
+    public static void print2DArray(double[][] array) {
+        for (double[] row : array) {
+            System.out.println(Arrays.toString(row));
+        }
+    }
+
 }
