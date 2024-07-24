@@ -81,7 +81,7 @@ public class DatabaseHelper {
                 // Use the normalized value from the map
                 double normalizedTableName = tableNameMap.get(tableName);
 
-                stockData.add(new double[]{dateAsDouble, close, normalizedTableName, high, low, open, volume, turnover});
+                stockData.add(new double[]{normalizedTableName,close, high, low, open, volume, turnover});
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error loading stock data for table " + tableName, e);
@@ -94,19 +94,17 @@ public class DatabaseHelper {
         String createTableSQL = "CREATE TABLE IF NOT EXISTS predictions (" +
                 "id INT AUTO_INCREMENT PRIMARY KEY, " +
                 "stock_symbol VARCHAR(10) NOT NULL, " +
-                "predict VARCHAR(255) NOT NULL, " +
-                "point_change VARCHAR(255) NOT NULL, " +
+                "point_change DOUBLE NOT NULL, " +
                 "price_change DOUBLE NOT NULL, " +
                 "prediction DOUBLE NOT NULL, " +
                 "actual DOUBLE NOT NULL, " +
-                "date DATE NOT NULL, " +
-                "prediction_date DATE NOT NULL" +
+                "prediction_date DATE NOT NULL DEFAULT CURRENT_DATE" +
                 ")";
 
         try (Connection conn = connect();
              Statement stmt = conn.createStatement()) {
             stmt.executeUpdate(createTableSQL);
-            LOGGER.log(Level.INFO, "Ensured that predictions table exists");
+            System.out.println("Table Created");
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error creating predictions table", e);
             throw e;
@@ -116,7 +114,7 @@ public class DatabaseHelper {
     public void savePredictions(String stockSymbol, double[] predictions, double[] actuals) throws SQLException {
         createPredictionsTableIfNotExists();
 
-        System.out.println("prediction : "+predictions+", actuals : "+actuals+", symbol : "+stockSymbol);
+        System.out.println("prediction : " + Arrays.toString(predictions) + ", actuals : " + Arrays.toString(actuals) + ", symbol : " + stockSymbol);
 
         String query = "INSERT INTO predictions (stock_symbol, prediction, actual, point_change, price_change, prediction_date) VALUES (?, ?, ?, ?, ?, ?)";
 
@@ -142,7 +140,7 @@ public class DatabaseHelper {
 
             pstmt.executeBatch();
             conn.commit();
-            LOGGER.log(Level.INFO, "Saved predictions for stock symbol: " + stockSymbol);
+            System.out.println("Saved predictions for stock symbol: " + stockSymbol);
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error saving predictions for stock symbol: " + stockSymbol, e);
             throw e;

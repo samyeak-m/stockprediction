@@ -24,19 +24,22 @@ public class Main {
     private static final String YELLOW = "\u001B[33m";
 
     static int hiddenSize = 100;
-    static int inputSize = 9;
+    static int inputSize = 10;
     static int outputSize = 1;
     static int epoch = 15;
+    static int batch = 32;
     static double trainingRate = 0.001;
 
     private static final List<Integer> epochList = new ArrayList<>();
     private static final List<Double> accuracyList = new ArrayList<>();
+    private static final List<Double> lossList = new ArrayList<>();
+
+    private static double[] min;
+    private static double[] max;
 
     public static void main(String[] args) throws SQLException, IOException, ClassNotFoundException {
-        LOGGER.setLevel(Level.INFO);
         ConsoleHandler handler = new ConsoleHandler();
         handler.setLevel(Level.INFO);
-        LOGGER.addHandler(handler);
 
         DatabaseHelper dbHelper = new DatabaseHelper();
 
@@ -45,6 +48,7 @@ public class Main {
             lstm = new LSTMNetwork(inputSize, hiddenSize, outputSize);
         }
 
+        // Load and prepare stock data
         List<String> tableNames = dbHelper.getAllStockTableNames();
         List<double[]> allStockData = new ArrayList<>();
 
@@ -55,12 +59,12 @@ public class Main {
         double[][] stockDataArray = allStockData.toArray(new double[0][]);
 
         // Calculate technical indicators
-        double[][] technicalIndicators = TechnicalIndicators.calculate(stockDataArray, 1, 20);
+        double[][] technicalIndicators = TechnicalIndicators.calculate(stockDataArray, 8, 16, 3);
 
         // Combine stock data with technical indicators
         double[][] extendedData = DataPreprocessor.addFeatures(stockDataArray, technicalIndicators);
 
-        double[][][] preprocessedData = DataPreprocessor.preprocessData(extendedData, 0.6);
+        double[][][] preprocessedData = preprocessData(extendedData, 0.6);
         double[][] trainData = preprocessedData[0];
         double[][] testData = preprocessedData[1];
 
@@ -79,6 +83,7 @@ public class Main {
         createDirectory(predictionChartDir);
 
         CustomChartUtils.saveAccuracyChart("Model Accuracy", epochList, accuracyList, accuracyChartDir + File.separator + "model_accuracy.png", "Epochs", "Accuracy");
+        CustomChartUtils.saveLossChart("Model Loss", epochList, lossList, accuracyChartDir + File.separator + "model_loss.png", "Epochs", "Loss");
 
         try (Scanner scanner = new Scanner(System.in)) {
             while (true) {
@@ -97,6 +102,8 @@ public class Main {
                 }
             }
         }
+
+        System.out.println(GREEN + "Program execution finished." + RESET);
     }
 
     private static void trainModel(LSTMNetwork lstm, double[][] trainData, int epochs, double learningRate) {
@@ -107,7 +114,7 @@ public class Main {
         for (int epoch = 0; epoch < epochs; epoch++) {
             long startTime = System.currentTimeMillis();
             int totalDataPoints = trainData.length;
-            int batchSize = 32; // Example batch size, adjust as needed
+            int batchSize = batch;
             int batches = totalDataPoints / batchSize;
 
             // Shuffle trainData
@@ -119,7 +126,7 @@ public class Main {
             for (int batch = 0; batch < batches; batch++) {
                 double[][] batchData = Arrays.copyOfRange(trainData, batch * batchSize, (batch + 1) * batchSize);
                 for (double[] data : batchData) {
-                    double[] input = Arrays.copyOfRange(data, 0, data.length - 1);
+                    double[] input = Arrays.copyOfRange(data, 0, data.length);
                     double[] target = new double[]{data[data.length - 1]};
                     lstm.backpropagate(input, target, learningRate);
 
@@ -133,17 +140,24 @@ public class Main {
             }
 
             // Calculate accuracy and loss
-            double accuracy = testModel(lstm, trainData);
-            double epochLoss = calculateLoss(lstm, trainData);
+            double accuracy = testModel(lstm, trainData) * 100;
+            double epochLoss = calculateLoss(lstm, trainData) * 100;
 
             // Logging
             long endTime = System.currentTimeMillis();
-            long elapsedTime = endTime - startTime;
+
+            long elapsedTimeMillis = endTime - startTime;
+
+            String elapsedTime = String.format("%02d:%02d:%02d",
+                    (elapsedTimeMillis / (1000 * 60 * 60)) % 24,
+                    (elapsedTimeMillis / (1000 * 60)) % 60,
+                    (elapsedTimeMillis / 1000) % 60);
 
             epochList.add(epoch);
             accuracyList.add(accuracy);
+            lossList.add(epochLoss);
 
-            LOGGER.log(Level.INFO, String.format(YELLOW + "Epoch %d: Accuracy = %.4f, Loss = %.6f, Time = %d ms" + RESET, epoch, accuracy, epochLoss, elapsedTime));
+            LOGGER.log(Level.INFO, String.format(YELLOW + "Epoch %d: Accuracy = %.2f%%, Loss = %.2f%%, Time = %s" + RESET, epoch, accuracy, epochLoss, elapsedTime));
 
             // Check if accuracy is the same as previous epoch
             if (Math.abs(accuracy - prevAccuracy) < 0.01) {
@@ -166,18 +180,13 @@ public class Main {
     private static double testModel(LSTMNetwork lstm, double[][] testData) {
         int correctPredictions = 0;
         for (double[] point : testData) {
-            double[] input = new double[point.length - 1];
-            System.arraycopy(point, 0, input, 0, point.length - 1);
-
+            double[] input = Arrays.copyOf(point, point.length - 1);
             double[] output = lstm.forward(input, lstm.getHiddenState(), lstm.getCellState());
             if (output == null) {
                 continue; // Skip this iteration if output is null
             }
             double prediction = output[0];
             double actual = point[point.length - 1];
-
-//            System.out.println("Actual price     : " + actual);
-//            System.out.println("Prediction price : " + prediction);
 
             if (Math.abs(prediction - actual) < 0.01 * actual) {
                 correctPredictions++;
@@ -189,8 +198,7 @@ public class Main {
     private static double calculateLoss(LSTMNetwork lstm, double[][] data) {
         double totalLoss = 0;
         for (double[] point : data) {
-            double[] input = new double[point.length - 1];
-            System.arraycopy(point, 0, input, 0, point.length - 1);
+            double[] input = Arrays.copyOf(point, point.length - 1);
             double[] output = lstm.forward(input, lstm.getHiddenState(), lstm.getCellState());
             double prediction = output[0];
             double actual = point[point.length - 1];
@@ -215,45 +223,59 @@ public class Main {
     private static void predictAndSave(DatabaseHelper dbHelper, LSTMNetwork lstm, String stockSymbol, int days, String predictionChartDir) throws SQLException, IOException {
         List<double[]> stockData = dbHelper.loadStockData(stockSymbol);
         double[][] stockDataArray = stockData.toArray(new double[0][]);
-        double[][] technicalIndicators = TechnicalIndicators.calculate(stockDataArray, 1, 20);
+
+        double[][] technicalIndicators = TechnicalIndicators.calculate(stockDataArray, 8, 16, 3);
+
         double[][] extendedData = DataPreprocessor.addFeatures(stockDataArray, technicalIndicators);
 
-        double[][] input = new double[days][extendedData[0].length];
-        for (int i = 0; i < days; i++) {
-            System.arraycopy(extendedData[i], 0, input[i], 0, extendedData[i].length);
-        }
+        extendedData = DataPreprocessor.normalize(extendedData, min, max);
 
         double[] predictions = new double[days];
         for (int i = 0; i < days; i++) {
-            double[] output = lstm.forward(input[i], lstm.getHiddenState(), lstm.getCellState());
-            if (output == null) {
-                LOGGER.severe("NaN value encountered during forward pass. Stopping prediction.");
-                return; // Or implement other error handling logic
-            }
+            double[] input = Arrays.copyOfRange(extendedData[extendedData.length - 1], 0, extendedData[0].length);
+            double[] output = lstm.forward(input, lstm.getHiddenState(), lstm.getCellState());
             predictions[i] = output[0];
+
+            double[] newInput = new double[extendedData[0].length];
+            System.arraycopy(input, 1, newInput, 0, input.length - 1);
+            newInput[newInput.length - 1] = predictions[i];
+            extendedData = Arrays.copyOf(extendedData, extendedData.length + 1);
+            extendedData[extendedData.length - 1] = newInput;
         }
 
-        double[] actualPrices = new double[days];
-        for (int i = 0; i < days; i++) {
-            actualPrices[i] = stockDataArray[stockDataArray.length - days + i][stockDataArray[0].length - 1];
+        predictions = DataPreprocessor.denormalize(predictions, min[min.length - 1], max[max.length - 1]);
+
+        double[] actualPrices = new double[stockDataArray.length];
+        for (int i = 0; i < stockDataArray.length; i++) {
+            actualPrices[i] = stockDataArray[i][stockDataArray[i].length - 1];
         }
 
-        CustomChartUtils.savePredictionChart(
-                "Stock Prediction: " + stockSymbol,
-                actualPrices,
-                predictions,
-                predictionChartDir + File.separator + stockSymbol + "_predictions.png",
-                "Days",
-                "Price"
-        );
-
-        System.out.println("Data to DB for stock: " + stockSymbol);
-        System.out.println("Predictions: " + Arrays.toString(predictions));
-        System.out.println("Actual Prices: " + Arrays.toString(actualPrices));
-
+        // Save predictions to chart
+        CustomChartUtils.savePredictionChart(stockSymbol + " Predictions", predictions, predictionChartDir + File.separator + stockSymbol + "_predictions.png", "Days", "Price");
         dbHelper.savePredictions(stockSymbol, predictions, actualPrices);
-
-        LOGGER.log(Level.INFO, GREEN + "Predictions for " + stockSymbol + " saved successfully!" + RESET);
+        System.out.println(GREEN + "Predictions saved for stock: " + stockSymbol + RESET);
     }
 
+    private static double[][][] preprocessData(double[][] data, double trainRatio) {
+        int trainSize = (int) (data.length * trainRatio);
+        int testSize = data.length - trainSize;
+
+        double[][] trainData = new double[trainSize][data[0].length];
+        double[][] testData = new double[testSize][data[0].length];
+
+        for (int i = 0; i < trainSize; i++) {
+            trainData[i] = data[i];
+        }
+        for (int i = 0; i < testSize; i++) {
+            testData[i] = data[trainSize + i];
+        }
+
+        min = DataPreprocessor.calculateMin(data);
+        max = DataPreprocessor.calculateMax(data);
+
+        trainData = DataPreprocessor.normalize(trainData, min, max);
+        testData = DataPreprocessor.normalize(testData, min, max);
+
+        return new double[][][]{trainData, testData};
+    }
 }

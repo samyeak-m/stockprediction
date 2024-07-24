@@ -1,6 +1,10 @@
 package lstm;
 
 import java.io.*;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -137,25 +141,75 @@ public class LSTMNetwork implements Serializable {
     }
 
     public double[] forward(double[] input, double[] hiddenState, double[] cellState) {
+
+        for (int i = 0; i< input.length;i++){
+            if (Double.isNaN(input[i])) {
+                System.err.println("Error: NaN value encountered in input at index: " + i);
+                return null;
+            }
+        }
+
         inputGate = leakyRelu(add(dotProduct(weightsInputGate, input), dotProduct(weightsHiddenInputGate, hiddenState), biasInputGate));
         forgetGate = leakyRelu(add(dotProduct(weightsForgetGate, input), dotProduct(weightsHiddenForgetGate, hiddenState), biasForgetGate));
         outputGate = leakyRelu(add(dotProduct(weightsOutputGate, input), dotProduct(weightsHiddenOutputGate, hiddenState), biasOutputGate));
         cellGate = leakyRelu(add(dotProduct(weightsCellGate, input), dotProduct(weightsHiddenCellGate, hiddenState), biasCellGate));
 
-        if (input.length != inputSize ||
+        int inlength = input.length;
+
+        if(input.length < inputSize){
+         inlength += 1;
+        }
+
+        int j = 1;
+//        try (BufferedWriter writer = new BufferedWriter(new FileWriter("out.txt"))) {
+//            for (double row : input) {
+//                for (int i = 0; i < input.length; i++) {
+//                    writer.write(i + " : input : "+i+" : " + input[i] + ", ");
+//                    if (i == 10) {
+//                        writer.write(j + " : row ");
+//                    }
+//                }
+//                writer.newLine();
+//                j++;
+//
+//            }
+//            for (double row : cellState) {
+//                for (int i = 0; i < cellState.length; i++) {
+//                    writer.write(i + " : cellState : " + cellState[i] + ", ");
+//                    writer.write(i + " : forget : " + forgetGate[i] + ", ");
+//                    writer.write(i + " : input gate : " + inputGate[i] + ", ");
+//                    if (i == 10) {
+//                        writer.write(j + " : row ");
+//                    }
+//                }
+//                j++;
+//                writer.newLine();
+//        }
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
+
+        if (inlength != inputSize ||
                 forgetGate.length != hiddenSize ||
                 inputGate.length != hiddenSize ||
                 cellGate.length != hiddenSize ||
                 outputGate.length != hiddenSize) {
             System.err.println("Error: Mismatched array lengths");
 
-                System.out.println(" input length : "+input.length+" input : "+inputSize+" forgetGate length : "+forgetGate.length+" inputGate length : "+inputGate.length+
+            int i = 1;
+            for (double row : input) {
+                System.out.println(i+" : input length + 1 : "+inlength+" input length : "+input.length+" input size : "+inputSize+" input : "+Arrays.toString(new double[]{row})+" forgetGate length : "+forgetGate.length+" inputGate length : "+inputGate.length+
                         " cellGate length : "+cellGate.length+" outputGate length : "+outputGate.length+" hiddenSize : "+hiddenSize);
-
+                i++;
+            }
             return null;
         }
 
         for (int i = 0; i < cellState.length; i++) {
+
+            cellState[i] = forgetGate[i] * cellState[i] + inputGate[i] * cellGate[i];
+            hiddenState[i] = outputGate[i] * leakyRelu(cellState[i]);
+
             if (Double.isNaN(forgetGate[i])) {
                 System.err.println("Error: NaN value encountered in forget gate at index: " + i);
                 return null;
@@ -167,14 +221,10 @@ public class LSTMNetwork implements Serializable {
             }
 
             if (Double.isNaN(cellGate[i])) {
-                System.err.println("Error: NaN value encountered in cell gate at index: " + i);
+                System.err.println("CellGate value: " + cellGate[i]);
+                System.err.println("Error: NaN value encountered in cell gate at index: " + i+"CellGate value: " + cellGate[i]);
                 return null;
             }
-
-//            if (Double.isNaN(input[i])) {
-//                System.err.println("Error: NaN value encountered in input at index: " + i);
-//                return null;
-//            }
 
             cellState[i] = forgetGate[i] * cellState[i] + inputGate[i] * cellGate[i];
 
@@ -182,7 +232,7 @@ public class LSTMNetwork implements Serializable {
                 System.err.println("Error: NaN value encountered in cell state after update at index: " + i);
                 return null;
             }
-            hiddenState[i] = outputGate[i] * relu(cellState[i]);
+            hiddenState[i] = outputGate[i] * leakyRelu(cellState[i]);
         }
 
         double[] output = dotProduct(weightsOutput, hiddenState);
@@ -190,6 +240,13 @@ public class LSTMNetwork implements Serializable {
         if (output == null) {
             System.err.println("Error: Output is null after forward pass");
             return null;
+        }
+
+        for (int i = 0; i < output.length; i++) {
+            if (Double.isNaN(output[i])) {
+                System.err.println("Error: NaN value encountered in output at index: " + i);
+                return null;
+            }
         }
 
         return output;
@@ -220,7 +277,24 @@ public class LSTMNetwork implements Serializable {
 
         clipGradients(gradients, 5.0);
 
-        updateWeights(weightsOutput, gradients, learningRate);
+        double[][] dWeightsOutput = outerProduct(dOutput, hiddenState);
+        double[][] dWeightsInputGate = outerProduct(dInputGate, input);
+        double[][] dWeightsForgetGate = outerProduct(dForgetGate, input);
+        double[][] dWeightsOutputGate = outerProduct(dOutputGate, input);
+        double[][] dWeightsCellGate = outerProduct(dCellGate, input);
+
+        updateWeights(weightsOutput, dWeightsOutput, learningRate);
+        updateWeights(weightsInputGate, dWeightsInputGate, learningRate);
+        updateWeights(weightsForgetGate, dWeightsForgetGate, learningRate);
+        updateWeights(weightsOutputGate, dWeightsOutputGate, learningRate);
+        updateWeights(weightsCellGate, dWeightsCellGate, learningRate);
+
+        updateBiases(biasOutput, dOutput, learningRate);
+        updateBiases(biasInputGate, dInputGate, learningRate);
+        updateBiases(biasForgetGate, dForgetGate, learningRate);
+        updateBiases(biasOutputGate, dOutputGate, learningRate);
+        updateBiases(biasCellGate, dCellGate, learningRate);
+
 
         double[] error = new double[target.length];
         for (int i = 0; i < target.length; i++) {
@@ -229,7 +303,7 @@ public class LSTMNetwork implements Serializable {
 
         double[] dOutput = new double[output.length];
         for (int i = 0; i < output.length; i++) {
-            dOutput[i] = -2 * error[i] * reluDerivative(output[i]);
+            dOutput[i] = -2 * error[i] * leakyReluDerivative(output[i]);
         }
 
 
@@ -241,10 +315,9 @@ public class LSTMNetwork implements Serializable {
 
         dOutput = new double[output.length];
         for (int i = 0; i < output.length; i++) {
-            dOutput[i] = -2 * error[i] * reluDerivative(output[i]);
+            dOutput[i] = -2 * error[i] * leakyReluDerivative(output[i]);
         }
 
-        double[][] dWeightsOutput = outerProduct(dOutput, hiddenState);
         double[] dBiasOutput = dOutput.clone();
 
         double[] dHiddenState = dotProductTranspose(weightsOutput, dOutput);
@@ -256,24 +329,20 @@ public class LSTMNetwork implements Serializable {
         double[] dCellGate = new double[hiddenSize];
 
         for (int i = 0; i < hiddenSize; i++) {
-            dOutputGate[i] = dHiddenState[i] * relu(cellState[i]) * reluDerivative(outputGate[i]);
-            dCellState[i] += dHiddenState[i] * outputGate[i] * reluDerivative(cellState[i]);
-            dInputGate[i] = dCellState[i] * cellGate[i] * reluDerivative(inputGate[i]);
-            dForgetGate[i] = dCellState[i] * cellState[i] * reluDerivative(forgetGate[i]);
-            dCellGate[i] = dCellState[i] * inputGate[i] * reluDerivative(cellGate[i]);
+            dOutputGate[i] = dHiddenState[i] * leakyRelu(cellState[i]) * leakyReluDerivative(outputGate[i]);
+            dCellState[i] += dHiddenState[i] * outputGate[i] * leakyReluDerivative(cellState[i]);
+            dInputGate[i] = dCellState[i] * cellGate[i] * leakyReluDerivative(inputGate[i]);
+            dForgetGate[i] = dCellState[i] * cellState[i] * leakyReluDerivative(forgetGate[i]);
+            dCellGate[i] = dCellState[i] * inputGate[i] * leakyReluDerivative(cellGate[i]);
             dHiddenState[i] = dCellState[i] * forgetGate[i];
         }
 
-        double[][] dWeightsInputGate = outerProduct(dInputGate, input);
         double[] dBiasInputGate = dInputGate.clone();
 
-        double[][] dWeightsForgetGate = outerProduct(dForgetGate, input);
         double[] dBiasForgetGate = dForgetGate.clone();
 
-        double[][] dWeightsOutputGate = outerProduct(dOutputGate, input);
         double[] dBiasOutputGate = dOutputGate.clone();
 
-        double[][] dWeightsCellGate = outerProduct(dCellGate, input);
         double[] dBiasCellGate = dCellGate.clone();
 
         updateWeights(weightsOutput, dWeightsOutput, learningRate);
@@ -292,25 +361,10 @@ public class LSTMNetwork implements Serializable {
         updateBiases(biasCellGate, dBiasCellGate, learningRate);
     }
 
-    private double relu(double x) {
-        return Math.max(0, x);
-    }
-
-    private double[] relu(double[] x) {
-        double[] result = new double[x.length];
-        for (int i = 0; i < x.length; i++) {
-            result[i] = relu(x[i]);
-        }
-        return result;
-    }
-
-    private double reluDerivative(double x) {
-        return x > 0 ? 1 : 0;
-    }
-
     private double[] dotProduct(double[][] matrix, double[] vector) {
         int m = matrix.length;
         int n = vector.length;
+//        System.out.println("n : "+n);
         double[] result = new double[m];
         for (int i = 0; i < m; i++) {
             result[i] = 0;
@@ -342,7 +396,7 @@ public class LSTMNetwork implements Serializable {
     private double[][] calculateGradients(double[] input, double[] hiddenState, double[] cellState, double[] dHiddenState, double[] dCellState,
                                           double[] dInputGate, double[] dForgetGate, double[] dOutputGate, double[] dCellGate, double[] dOutput,
                                           double[] target, double[] output) {
-        double[][] gradients = new double[9][];
+        double[][] gradients = new double[10][];
 
         gradients[0] = dHiddenState;
         gradients[1] = dCellState;
@@ -352,14 +406,18 @@ public class LSTMNetwork implements Serializable {
         gradients[5] = dCellGate;
         gradients[6] = dOutput;
 
-        gradients[7] = new double[hiddenSize * inputSize];
-        gradients[8] = new double[hiddenSize * hiddenSize];
+        // Initialize the arrays for the outer product gradients to the correct sizes
+        gradients[7] = new double[hiddenSize * inputSize]; // weightsInputGate
+        gradients[8] = new double[hiddenSize * hiddenSize]; // weightsHiddenInputGate, weightsHiddenForgetGate, weightsHiddenOutputGate, weightsHiddenCellGate
+
+        // Added gradient for biases
+        gradients[9] = new double[hiddenSize]; // biases for gates and cell
 
         double[] extendedDOutput = new double[hiddenSize];
         Arrays.fill(extendedDOutput, dOutput[0]);
 
         for (int i = 0; i < target.length; i++) {
-            extendedDOutput[i] = -2 * (target[i] - output[i]) * reluDerivative(output[i]);
+            extendedDOutput[i] = -2 * (target[i] - output[i]) * leakyReluDerivative(output[i]);
         }
 
         for (int i = 0; i < dHiddenState.length; i++) {
@@ -369,14 +427,33 @@ public class LSTMNetwork implements Serializable {
             dForgetGate[i] = dCellState[i] * cellState[i] * leakyReluDerivative(dForgetGate[i]);
             dOutputGate[i] = dHiddenState[i] * leakyReluDerivative(dOutputGate[i]);
             dCellGate[i] = dCellState[i] * dInputGate[i] * leakyReluDerivative(dCellGate[i]);
+
+            if (Double.isNaN(dHiddenState[i]) || Double.isNaN(dCellState[i]) || Double.isNaN(dInputGate[i]) ||
+                    Double.isNaN(dForgetGate[i]) || Double.isNaN(dOutputGate[i]) || Double.isNaN(dCellGate[i])) {
+                System.err.println("Error: NaN value encountered in gradients at index: " + i);
+                return null;
+            }
         }
 
-        for (int i = 0; i < gradients[7].length; i++) {
-            gradients[7][i] = 0;
+        int index = 0;
+        for (int i = 0; i < hiddenSize; i++) {
+            for (int j = 0; j < inputSize; j++) {
+                gradients[7][index] = dInputGate[i] * input[j];
+                index++;
+            }
         }
 
-        for (int i = 0; i < gradients[8].length; i++) {
-            gradients[8][i] = 0;
+        index = 0;
+        for (int i = 0; i < hiddenSize; i++) {
+            for (int j = 0; j < hiddenSize; j++) {
+                gradients[8][index] = dInputGate[i] * hiddenState[j];
+                index++;
+            }
+        }
+
+        // Calculate gradients for biases
+        for (int i = 0; i < hiddenSize; i++) {
+            gradients[9][i] = dInputGate[i] + dForgetGate[i] + dOutputGate[i] + dCellGate[i];
         }
 
         return gradients;
@@ -395,10 +472,16 @@ public class LSTMNetwork implements Serializable {
         }
     }
 
-
-
     private void updateWeights(double[][] weights, double[][] gradients, double learningRate) {
+        if (weights.length != gradients.length) {
+            System.err.println("Weights and gradients must have the same number of rows. Weights: " + weights.length + ", Gradients: " + gradients.length);
+        }
+
         for (int i = 0; i < weights.length; i++) {
+            if (weights[i].length != gradients[i].length) {
+                System.err.println("Row " + i + " of weights and gradients must have the same length. Weights: " + weights[i].length + ", Gradients: " + gradients[i].length);
+            }
+
             for (int j = 0; j < weights[i].length; j++) {
                 weights[i][j] -= learningRate * gradients[i][j];
             }
@@ -438,9 +521,12 @@ public class LSTMNetwork implements Serializable {
     }
 
     public void saveModel(String filePath) {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
-            oos.writeObject(this);
+        try (FileOutputStream fileOut = new FileOutputStream(filePath);
+             ObjectOutputStream objectOut = new ObjectOutputStream(fileOut)) {
+            objectOut.writeObject(this);
+            System.out.println("Model saved successfully to: " + filePath);
         } catch (IOException e) {
+            System.err.println("Error saving model to file: " + filePath);
             e.printStackTrace();
         }
     }

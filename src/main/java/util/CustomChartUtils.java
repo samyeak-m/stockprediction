@@ -66,17 +66,10 @@ public class CustomChartUtils {
         ChartUtils.saveChartAsPNG(new File(filePath), chart, 800, 600);
     }
 
-    public static void savePredictionChart(String title, double[] actualPrices, double[] predictedPrices, String filePath, String xLabel, String yLabel) throws IOException {
-        XYSeries actualSeries = new XYSeries("Actual Prices");
+    public static void savePredictionChart(String title, double[] predictedPrices, String filePath, String xLabel, String yLabel) throws IOException {
         XYSeries predictedSeries = new XYSeries("Predicted Prices");
 
-        for (int i = 0; i < actualPrices.length; i++) {
-            actualSeries.add(i + 1, actualPrices[i]);
-            predictedSeries.add(i + 1, predictedPrices[i]);
-        }
-
         XYSeriesCollection dataset = new XYSeriesCollection();
-        dataset.addSeries(actualSeries);
         dataset.addSeries(predictedSeries);
 
         JFreeChart chart = ChartFactory.createXYLineChart(
@@ -92,4 +85,30 @@ public class CustomChartUtils {
 
         ChartUtils.saveChartAsPNG(new File(filePath), chart, 800, 600);
     }
+
+    public static void saveLossChart(String title, List<Integer> epochs, List<Double> losses, String filePath, String xLabel, String yLabel) throws IOException {
+        XYSeries lossSeries = new XYSeries("Loss");
+
+        for (int i = 0; i < epochs.size(); i++) {
+            lossSeries.add(epochs.get(i), losses.get(i));
+        }
+
+        XYSeriesCollection dataset = new XYSeriesCollection();
+        dataset.addSeries(lossSeries);
+
+        JFreeChart chart = ChartFactory.createXYLineChart(
+                title,
+                xLabel,
+                yLabel,
+                dataset,
+                PlotOrientation.VERTICAL,
+                true,
+                true,
+                false
+        );
+
+        ChartUtils.saveChartAsPNG(new File(filePath), chart, 800, 600);
+    }
+
+
 }
