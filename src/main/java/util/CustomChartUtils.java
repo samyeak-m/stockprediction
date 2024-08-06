@@ -4,7 +4,6 @@ import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
@@ -13,6 +12,7 @@ import java.io.IOException;
 import java.util.List;
 
 public class CustomChartUtils {
+
     public static void plotTrainingProgress(List<Double> trainingLoss, List<Double> validationLoss) {
         XYSeries trainingSeries = new XYSeries("Training Loss");
         XYSeries validationSeries = new XYSeries("Validation Loss");
@@ -37,9 +37,15 @@ public class CustomChartUtils {
                 false
         );
 
-        XYPlot plot = chart.getXYPlot();
-        plot.getRenderer().setSeriesPaint(0, new java.awt.Color(0xFF6600));
-        plot.getRenderer().setSeriesPaint(1, new java.awt.Color(0x0066FF));
+        // Optional: Customize the chart appearance here (e.g., colors, gridlines)
+        chart.setBackgroundPaint(java.awt.Color.white);
+
+        // Save or display the chart
+        try {
+            ChartUtils.saveChartAsPNG(new File("training_progress.png"), chart, 800, 600);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void saveAccuracyChart(String title, List<Integer> epochs, List<Double> accuracies, String filePath, String xLabel, String yLabel) throws IOException {
@@ -63,26 +69,10 @@ public class CustomChartUtils {
                 false
         );
 
-        ChartUtils.saveChartAsPNG(new File(filePath), chart, 800, 600);
-    }
+        // Optional: Customize the chart appearance here
+        chart.setBackgroundPaint(java.awt.Color.white);
 
-    public static void savePredictionChart(String title, double[] predictedPrices, String filePath, String xLabel, String yLabel) throws IOException {
-        XYSeries predictedSeries = new XYSeries("Predicted Prices");
-
-        XYSeriesCollection dataset = new XYSeriesCollection();
-        dataset.addSeries(predictedSeries);
-
-        JFreeChart chart = ChartFactory.createXYLineChart(
-                title,
-                xLabel,
-                yLabel,
-                dataset,
-                PlotOrientation.VERTICAL,
-                true,
-                true,
-                false
-        );
-
+        // Save the chart to a file
         ChartUtils.saveChartAsPNG(new File(filePath), chart, 800, 600);
     }
 
@@ -107,8 +97,10 @@ public class CustomChartUtils {
                 false
         );
 
+        // Optional: Customize the chart appearance here
+        chart.setBackgroundPaint(java.awt.Color.white);
+
+        // Save the chart to a file
         ChartUtils.saveChartAsPNG(new File(filePath), chart, 800, 600);
     }
-
-
 }

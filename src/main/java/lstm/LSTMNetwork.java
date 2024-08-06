@@ -5,7 +5,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 public class LSTMNetwork implements Serializable {
@@ -45,6 +47,9 @@ public class LSTMNetwork implements Serializable {
     private double[] dOutputGate;
     private double[] dCellGate;
     private double[] dOutput;
+    private double lastPredictedPrice;
+    private List<String> changeData = new ArrayList<>();
+
 
     public LSTMNetwork(int inputSize, int hiddenSize, int outputSize) {
         this.inputSize = inputSize;
@@ -250,6 +255,9 @@ public class LSTMNetwork implements Serializable {
         }
 
         return output;
+    }
+    public double getLastPredictedPrice() {
+        return this.lastPredictedPrice;
     }
 
     public void backpropagate(double[] input, double[] target, double learningRate) {
@@ -536,6 +544,7 @@ public class LSTMNetwork implements Serializable {
             System.out.println("Model loading");
             return (LSTMNetwork) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
+            System.err.println(e);
             System.out.println("Creating model");
             return null;
         }
@@ -552,4 +561,5 @@ public class LSTMNetwork implements Serializable {
     public double[] getCellState() {
         return cellState;
     }
+
 }

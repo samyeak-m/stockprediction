@@ -81,7 +81,7 @@ public class DatabaseHelper {
                 // Use the normalized value from the map
                 double normalizedTableName = tableNameMap.get(tableName);
 
-                stockData.add(new double[]{normalizedTableName,close, high, low, open, volume, turnover});
+                stockData.add(new double[]{normalizedTableName, close, high, low, open, volume, turnover, dateAsDouble});
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error loading stock data for table " + tableName, e);
@@ -97,7 +97,7 @@ public class DatabaseHelper {
                 "point_change DOUBLE NOT NULL, " +
                 "price_change DOUBLE NOT NULL, " +
                 "prediction DOUBLE NOT NULL, " +
-                "actual DOUBLE NOT NULL, " +
+                "lastclose DOUBLE NOT NULL, " +
                 "prediction_date DATE NOT NULL DEFAULT CURRENT_DATE" +
                 ")";
 
@@ -111,12 +111,12 @@ public class DatabaseHelper {
         }
     }
 
-    public void savePredictions(String stockSymbol, double[] predictions, double[] actuals) throws SQLException {
+    public void savePredictions(String stockSymbol, double[] predictions, double[] lastclose) throws SQLException {
         createPredictionsTableIfNotExists();
 
-        System.out.println("prediction : " + Arrays.toString(predictions) + ", actuals : " + Arrays.toString(actuals) + ", symbol : " + stockSymbol);
+        System.out.println("prediction : " + Arrays.toString(predictions) + ", Last close : " + Arrays.toString(lastclose) + ", symbol : " + stockSymbol);
 
-        String query = "INSERT INTO predictions (stock_symbol, prediction, actual, point_change, price_change, prediction_date) VALUES (?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO predictions (stock_symbol, prediction, lastclose, point_change, price_change, prediction_date) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = connect();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -125,13 +125,13 @@ public class DatabaseHelper {
 
             for (int i = 0; i < predictions.length; i++) {
                 double prediction = predictions[i];
-                double actual = actuals[i];
-                double pointChange = prediction - actual;
-                double priceChange = pointChange / actual;
+                double close = lastclose[i];
+                double pointChange = prediction - close;
+                double priceChange = pointChange / close;
 
                 pstmt.setString(1, stockSymbol);
                 pstmt.setDouble(2, prediction);
-                pstmt.setDouble(3, actual);
+                pstmt.setDouble(3, close);
                 pstmt.setDouble(4, pointChange);
                 pstmt.setDouble(5, priceChange);
                 pstmt.setDate(6, Date.valueOf(predictionDate));

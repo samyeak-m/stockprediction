@@ -8,11 +8,21 @@ public class DataPreprocessor {
         double[][] normalizedData = new double[data.length][data[0].length];
         for (int i = 0; i < data.length; i++) {
             for (int j = 0; j < data[i].length; j++) {
-                normalizedData[i][j] = (data[i][j] - min[j]) / (max[j] - min[j]);
+                if (data[i][j] == 0) {
+                    normalizedData[i][j] = 0;
+                } else {
+                    double range = max[j] - min[j];
+                    if (range == 0) {
+                        normalizedData[i][j] = 0;
+                    } else {
+                        normalizedData[i][j] = (data[i][j] - min[j]) / range;
+                    }
+                }
             }
         }
         return normalizedData;
     }
+
 
     public static double[][] addFeatures(double[][] data, double[][] technicalIndicators) {
         double[][] extendedData = new double[data.length][data[0].length + technicalIndicators[0].length];

@@ -9,16 +9,22 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8a665f72-76be-45db-8f3b-b47e13b27452" name="Changes" comment="UPDATE : null on output">
-      <change afterPath="$PROJECT_DIR$/out.txt" afterDir="false" />
+    <list default="true" id="8a665f72-76be-45db-8f3b-b47e13b27452" name="Changes" comment="UPDATE : working for a day">
+      <change afterPath="$PROJECT_DIR$/chartsv1/accuracy/model_accuracy.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/chartsv1/accuracy/model_loss.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/chartsv2_10/accuracy/model_accuracy.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/chartsv2_10/accuracy/model_loss.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lstm_modelv1_15.ser" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lstm_modelv2_10.ser" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out.txt" beforeDir="false" afterPath="$PROJECT_DIR$/out.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Main.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/database/DatabaseHelper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/database/DatabaseHelper.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/lstm/LSTMNetwork.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/lstm/LSTMNetwork.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/lstm/LSTMTrainer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/lstm/LSTMTrainer.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/util/CustomChartUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/util/CustomChartUtils.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/util/DataPreprocessor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/util/DataPreprocessor.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/util/TechnicalIndicators.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/util/TechnicalIndicators.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/chat.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/chat.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -266,7 +272,18 @@
       <workItem from="1721699892463" duration="1430000" />
       <workItem from="1721701366169" duration="5978000" />
       <workItem from="1721721808010" duration="521000" />
-      <workItem from="1721786941093" duration="356000" />
+      <workItem from="1721786941093" duration="6904000" />
+      <workItem from="1721873582856" duration="7202000" />
+      <workItem from="1721893782335" duration="898000" />
+      <workItem from="1721961899742" duration="64000" />
+      <workItem from="1721961982132" duration="5301000" />
+      <workItem from="1721989335316" duration="1888000" />
+      <workItem from="1722565932122" duration="2571000" />
+      <workItem from="1722756351884" duration="58000" />
+      <workItem from="1722756752600" duration="10689000" />
+      <workItem from="1722826019863" duration="6877000" />
+      <workItem from="1722842598317" duration="9695000" />
+      <workItem from="1722908600234" duration="6300000" />
     </task>
     <task id="LOCAL-00001" summary="CREATE : stock prediction usign lstm algorithm">
       <option name="closed" value="true" />
@@ -372,7 +389,15 @@
       <option name="project" value="LOCAL" />
       <updated>1720576885115</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="UPDATE : working for a day">
+      <option name="closed" value="true" />
+      <created>1721787380608</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1721787380608</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -388,7 +413,8 @@
     <MESSAGE value="UPDATE : normalized stock symbol  to 0 - 1" />
     <MESSAGE value="UPDATE : array out of bond fix" />
     <MESSAGE value="UPDATE : null on output" />
-    <option name="LAST_COMMIT_MESSAGE" value="UPDATE : null on output" />
+    <MESSAGE value="UPDATE : working for a day" />
+    <option name="LAST_COMMIT_MESSAGE" value="UPDATE : working for a day" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

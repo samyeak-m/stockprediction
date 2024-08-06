@@ -12,47 +12,39 @@ public class LSTMTrainer {
         this.learningRate = learningRate;
     }
 
-    public void train(double[][] trainData, int epochs, int batchSize) {
-        int totalDataPoints = trainData.length;
-        int batches = totalDataPoints / batchSize;
-
+    public void train(double[][] data, int epochs, int batchSize) {
         for (int epoch = 0; epoch < epochs; epoch++) {
-            shuffleArray(trainData);
-
-            for (int batch = 0; batch < batches; batch++) {
-                double[][] batchData = getBatch(trainData, batch, batchSize);
-                for (double[] data : batchData) {
-                    double[] input = getInput(data);
-                    double[] target = getTarget(data);
-                    lstm.backpropagate(input, target, learningRate);
-                }
+            shuffleArray(data);
+            for (int i = 0; i < data.length; i += batchSize) {
+                double[][] batch = getBatch(data, i, batchSize);
+                trainBatch(batch);
             }
         }
     }
 
-    private double[][] getBatch(double[][] data, int batchIndex, int batchSize) {
-        int start = batchIndex * batchSize;
+    private void trainBatch(double[][] batch) {
+        for (double[] sample : batch) {
+            double[] input = new double[sample.length - 1];
+            System.arraycopy(sample, 0, input, 0, input.length);
+            double[] target = new double[]{sample[sample.length - 1]};
+
+            lstm.backpropagate(input, target, learningRate);
+        }
+    }
+
+    private double[][] getBatch(double[][] data, int start, int batchSize) {
         int end = Math.min(start + batchSize, data.length);
         double[][] batch = new double[end - start][];
-        System.arraycopy(data, start, batch, 0, end - start);
+        System.arraycopy(data, start, batch, 0, batch.length);
         return batch;
     }
 
-    private double[] getInput(double[] data) {
-        return Arrays.copyOfRange(data, 0, data.length - 1);
-    }
-
-    private double[] getTarget(double[] data) {
-        return new double[]{data[data.length - 1]};
-    }
-
     private void shuffleArray(double[][] array) {
-        Random rand = new Random();
         for (int i = array.length - 1; i > 0; i--) {
-            int j = rand.nextInt(i + 1);
-            double[] temp = array[i];
-            array[i] = array[j];
-            array[j] = temp;
+            int index = (int) (Math.random() * (i + 1));
+            double[] temp = array[index];
+            array[index] = array[i];
+            array[i] = temp;
         }
     }
 }
