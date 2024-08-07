@@ -47,9 +47,6 @@ public class LSTMNetwork implements Serializable {
     private double[] dOutputGate;
     private double[] dCellGate;
     private double[] dOutput;
-    private double lastPredictedPrice;
-    private List<String> changeData = new ArrayList<>();
-
 
     public LSTMNetwork(int inputSize, int hiddenSize, int outputSize) {
         this.inputSize = inputSize;
@@ -253,11 +250,7 @@ public class LSTMNetwork implements Serializable {
                 return null;
             }
         }
-
         return output;
-    }
-    public double getLastPredictedPrice() {
-        return this.lastPredictedPrice;
     }
 
     public void backpropagate(double[] input, double[] target, double learningRate) {
@@ -291,17 +284,17 @@ public class LSTMNetwork implements Serializable {
         double[][] dWeightsOutputGate = outerProduct(dOutputGate, input);
         double[][] dWeightsCellGate = outerProduct(dCellGate, input);
 
-        updateWeights(weightsOutput, dWeightsOutput, learningRate);
-        updateWeights(weightsInputGate, dWeightsInputGate, learningRate);
-        updateWeights(weightsForgetGate, dWeightsForgetGate, learningRate);
-        updateWeights(weightsOutputGate, dWeightsOutputGate, learningRate);
-        updateWeights(weightsCellGate, dWeightsCellGate, learningRate);
-
-        updateBiases(biasOutput, dOutput, learningRate);
-        updateBiases(biasInputGate, dInputGate, learningRate);
-        updateBiases(biasForgetGate, dForgetGate, learningRate);
-        updateBiases(biasOutputGate, dOutputGate, learningRate);
-        updateBiases(biasCellGate, dCellGate, learningRate);
+//        updateWeights(weightsOutput, dWeightsOutput, learningRate);
+//        updateWeights(weightsInputGate, dWeightsInputGate, learningRate);
+//        updateWeights(weightsForgetGate, dWeightsForgetGate, learningRate);
+//        updateWeights(weightsOutputGate, dWeightsOutputGate, learningRate);
+//        updateWeights(weightsCellGate, dWeightsCellGate, learningRate);
+//
+//        updateBiases(biasOutput, dOutput, learningRate);
+//        updateBiases(biasInputGate, dInputGate, learningRate);
+//        updateBiases(biasForgetGate, dForgetGate, learningRate);
+//        updateBiases(biasOutputGate, dOutputGate, learningRate);
+//        updateBiases(biasCellGate, dCellGate, learningRate);
 
 
         double[] error = new double[target.length];
@@ -315,16 +308,16 @@ public class LSTMNetwork implements Serializable {
         }
 
 
-        error = new double[target.length];
-        for (int i = 0; i < target.length; i++) {
-            assert output != null;
-            error[i] = target[i] - output[i];
-        }
-
-        dOutput = new double[output.length];
-        for (int i = 0; i < output.length; i++) {
-            dOutput[i] = -2 * error[i] * leakyReluDerivative(output[i]);
-        }
+//        error = new double[target.length];
+//        for (int i = 0; i < target.length; i++) {
+//            assert output != null;
+//            error[i] = target[i] - output[i];
+//        }
+//
+//        dOutput = new double[output.length];
+//        for (int i = 0; i < output.length; i++) {
+//            dOutput[i] = -2 * error[i] * leakyReluDerivative(output[i]);
+//        }
 
         double[] dBiasOutput = dOutput.clone();
 
@@ -381,14 +374,10 @@ public class LSTMNetwork implements Serializable {
 //                System.out.println(i+" "+j+" result : "+result[i]+" = "+matrix[i][j]+" * "+vector[j]);
             }
         }
-
         int i = 1;
-
         for (double row : result) {
-
 //            System.out.println(i+" : "+Arrays.toString(new double[]{row}));
             i++;
-
         }
         return result;
     }

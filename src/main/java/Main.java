@@ -14,7 +14,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Main {
-    static String version = "v2";
+    static String version = "v8";
 
     private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
     private static final String RESET = "\u001B[0m";
@@ -25,9 +25,9 @@ public class Main {
     static int hiddenSize = 250;
     static int inputSize = 11;
     static int outputSize = 1;
-    static int epoch = 10;
+    static int epoch = 1000;
     static int batch = 32;
-    static double trainingRate = 0.001;
+    static double trainingRate = 0.0001;
 
     private static final String MODEL_FILE_PATH = "lstm_model" + version +"_"+epoch+".ser";
 
@@ -151,7 +151,7 @@ public class Main {
             accuracyList.add(accuracy);
             lossList.add(epochLoss);
 
-            LOGGER.log(Level.INFO, String.format(YELLOW + "Epoch %d: Accuracy = %.2f%%, Loss = %.2f%%, Time = %s" + RESET, epoch, accuracy, epochLoss, elapsedTime));
+            LOGGER.log(Level.INFO, String.format(YELLOW + "Epoch %d: Accuracy = %.2f, Loss = %.2f, Time = %s" + RESET, epoch, accuracy, epochLoss, elapsedTime));
 
             totalAccuracy += accuracy;
             totalLoss += epochLoss;
@@ -163,7 +163,32 @@ public class Main {
                 sameCount = 0;
             }
 
-            if (sameCount == 2) {
+            if (sameCount == 25 && accuracy < 0.70) {
+                lstm = new LSTMNetwork(inputSize, hiddenSize, outputSize);
+                trainer = new LSTMTrainer(lstm, learningRate);
+                sameCount = 0;
+            }
+            else if(sameCount == 5 && accuracy < 0.10){
+                lstm = new LSTMNetwork(inputSize, hiddenSize, outputSize);
+                trainer = new LSTMTrainer(lstm, learningRate);
+                sameCount = 0;
+            }
+            else if(sameCount == 10 && accuracy < 0.20){
+                lstm = new LSTMNetwork(inputSize, hiddenSize, outputSize);
+                trainer = new LSTMTrainer(lstm, learningRate);
+                sameCount = 0;
+            }
+            else if(sameCount == 15 && accuracy < 0.30){
+                lstm = new LSTMNetwork(inputSize, hiddenSize, outputSize);
+                trainer = new LSTMTrainer(lstm, learningRate);
+                sameCount = 0;
+            }
+            else if(sameCount == 20 && accuracy < 0.60){
+                lstm = new LSTMNetwork(inputSize, hiddenSize, outputSize);
+                trainer = new LSTMTrainer(lstm, learningRate);
+                sameCount = 0;
+            }
+            else if(accuracy > 0.99){
                 lstm = new LSTMNetwork(inputSize, hiddenSize, outputSize);
                 trainer = new LSTMTrainer(lstm, learningRate);
                 sameCount = 0;
