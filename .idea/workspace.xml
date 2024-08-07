@@ -9,27 +9,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8a665f72-76be-45db-8f3b-b47e13b27452" name="Changes" comment="UPDATE : working for a day">
-      <change afterPath="$PROJECT_DIR$/chartsv2_100/accuracy/model_accuracy.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/chartsv2_100/accuracy/model_loss.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/chartsv4_10/accuracy/model_accuracy.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/chartsv4_10/accuracy/model_loss.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/chartsv5_10/accuracy/model_accuracy.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/chartsv5_10/accuracy/model_loss.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/chartsv5_100/accuracy/model_accuracy.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/chartsv5_100/accuracy/model_loss.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/chartsv6_100/accuracy/model_accuracy.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/chartsv6_100/accuracy/model_loss.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lstm_modelv2_100.ser" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lstm_modelv3_10.ser" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lstm_modelv4_10.ser" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lstm_modelv5_10.ser" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lstm_modelv5_100.ser" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/lstm/LSTMNetwork.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/lstm/LSTMNetwork.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.properties" afterDir="false" />
-    </list>
+    <list default="true" id="8a665f72-76be-45db-8f3b-b47e13b27452" name="Changes" comment="UPDATE : 1000 epoch" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -292,6 +272,7 @@
       <workItem from="1722934096756" duration="6543000" />
       <workItem from="1722941138797" duration="890000" />
       <workItem from="1722952379923" duration="2901000" />
+      <workItem from="1722994816960" duration="316000" />
     </task>
     <task id="LOCAL-00001" summary="CREATE : stock prediction usign lstm algorithm">
       <option name="closed" value="true" />
@@ -405,7 +386,15 @@
       <option name="project" value="LOCAL" />
       <updated>1721787380608</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="UPDATE : 1000 epoch">
+      <option name="closed" value="true" />
+      <created>1722995100179</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1722995100179</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -422,7 +411,8 @@
     <MESSAGE value="UPDATE : array out of bond fix" />
     <MESSAGE value="UPDATE : null on output" />
     <MESSAGE value="UPDATE : working for a day" />
-    <option name="LAST_COMMIT_MESSAGE" value="UPDATE : working for a day" />
+    <MESSAGE value="UPDATE : 1000 epoch" />
+    <option name="LAST_COMMIT_MESSAGE" value="UPDATE : 1000 epoch" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
