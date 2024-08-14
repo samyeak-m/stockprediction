@@ -148,7 +148,7 @@ public class TechnicalIndicators {
         return new double[][]{k, d};
     }
 
-    public static double[][] calculate(double[][] stockData, int smaPeriod, int emaPeriod, int rsiPeriod) {
+    public static double[][] calculate(double[][] stockData,int emaPeriod, int rsiPeriod) {
         int priceIndex = 1;
 
         double[] prices = new double[stockData.length];
@@ -158,16 +158,16 @@ public class TechnicalIndicators {
 
         }
 
-        double[] sma = calculateSMA(prices, smaPeriod);
+//        double[] sma = calculateSMA(prices, smaPeriod);
         double[] ema = calculateEMA(prices, emaPeriod);
         double[] rsi = calculateEMA(prices, rsiPeriod);
 
-        double[][] indicators = new double[stockData.length][3];
+        double[][] indicators = new double[stockData.length][2];
 
         for (int i = 0; i < stockData.length; i++) {
-            indicators[i][0] = sma[i];
-            indicators[i][1] = ema[i];
-            indicators[i][2] = rsi[i];
+//            indicators[i][0] = sma[i];
+            indicators[i][0] = ema[i];
+            indicators[i][1] = rsi[i];
         }
 
         return indicators;

@@ -14,7 +14,6 @@ public class LSTMTrainer {
 
     public void train(double[][] data, int epochs, int batchSize) {
         for (int epoch = 0; epoch < epochs; epoch++) {
-            shuffleArray(data);
             for (int i = 0; i < data.length; i += batchSize) {
                 double[][] batch = getBatch(data, i, batchSize);
                 trainBatch(batch);
@@ -37,14 +36,5 @@ public class LSTMTrainer {
         double[][] batch = new double[end - start][];
         System.arraycopy(data, start, batch, 0, batch.length);
         return batch;
-    }
-
-    private void shuffleArray(double[][] array) {
-        for (int i = array.length - 1; i > 0; i--) {
-            int index = (int) (Math.random() * (i + 1));
-            double[] temp = array[index];
-            array[index] = array[i];
-            array[i] = temp;
-        }
     }
 }
