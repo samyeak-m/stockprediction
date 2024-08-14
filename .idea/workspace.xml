@@ -9,7 +9,40 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8a665f72-76be-45db-8f3b-b47e13b27452" name="Changes" comment="UPDATE : 1000 epoch" />
+    <list default="true" id="8a665f72-76be-45db-8f3b-b47e13b27452" name="Changes" comment="UPDATE : graph and confusion matrix">
+      <change afterPath="$PROJECT_DIR$/normal.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e100_b16_h15/chartsv1_100/accuracy/model_accuracy.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e100_b16_h15/chartsv1_100/accuracy/model_loss.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e100_b16_h15/confusion.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e100_b16_h15/lstm_modelv1_100.ser" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e10_b16_h30/chartsv1_10/accuracy/model_accuracy.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e10_b16_h30/chartsv1_10/accuracy/model_loss.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e10_b16_h30/confusion.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e10_b16_h30/lstm_modelv1_10.ser" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e250_b32_h25/chartsv1_250/accuracy/model_accuracy.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e250_b32_h25/chartsv1_250/accuracy/model_loss.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e250_b32_h25/confusion.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e250_b32_h25/lstm_modelv1_250.ser" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e25_b16_h5/chartsv1_25/accuracy/model_accuracy.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e25_b16_h5/chartsv1_25/accuracy/model_loss.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e25_b16_h5/confusion.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e25_b16_h5/lstm_modelv1_25.ser" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e50_b32_h10/chartsv1_50/accuracy/model_accuracy.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e50_b32_h10/chartsv1_50/accuracy/model_loss.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e50_b32_h10/confusion.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e50_b32_h10/lstm_modelv1_50.ser" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e75_b16_h10/chartsv1_75/accuracy/model_accuracy.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e75_b16_h10/chartsv1_75/accuracy/model_loss.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e75_b16_h10/confusion.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e75_b16_h10/lstm_modelv1_75.ser" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/database/DatabaseHelper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/database/DatabaseHelper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/lstm/LSTMNetwork.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/lstm/LSTMNetwork.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/lstm/LSTMTrainer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/lstm/LSTMTrainer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/util/CustomChartUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/util/CustomChartUtils.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.properties" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -59,32 +92,32 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ASKED_ADD_EXTERNAL_FILES": "true",
-    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "Application.Main.executor": "Debug",
-    "Maven.StockPrediction [assembly:single].executor": "Debug",
-    "Maven.StockPrediction [clean].executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "git-widget-placeholder": "working",
-    "ignore.virus.scanning.warn.message": "true",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "D:/samyeak/BCA/6thsem/project/test/stockprediction",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "onboarding.tips.debug.path": "D:/samyeak/BCA/6thsem/project/StockPrediction/src/main/java/org/example/Main.java",
-    "project.structure.last.edited": "Artifacts",
-    "project.structure.proportion": "0.0",
-    "project.structure.side.proportion": "0.0",
-    "settings.editor.selected.configurable": "settings.qodana",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_ADD_EXTERNAL_FILES&quot;: &quot;true&quot;,
+    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;Application.Main.executor&quot;: &quot;Debug&quot;,
+    &quot;Maven.StockPrediction [assembly:single].executor&quot;: &quot;Debug&quot;,
+    &quot;Maven.StockPrediction [clean].executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;working&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/samyeak/BCA/6thsem/project/test/stockprediction&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;onboarding.tips.debug.path&quot;: &quot;D:/samyeak/BCA/6thsem/project/StockPrediction/src/main/java/org/example/Main.java&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;SDKs&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;settings.qodana&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="D:\samyeak\BCA\6thsem\project\test\stockprediction" />
@@ -145,8 +178,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-9f38398b9061-39b83d9b5494-intellij.indexing.shared.core-IU-241.18034.62" />
-        <option value="bundled-js-predefined-1d06a55b98c1-0b3e54e931b4-JavaScript-IU-241.18034.62" />
+        <option value="bundled-jdk-9823dce3aa75-b114ca120d71-intellij.indexing.shared.core-IU-242.21829.142" />
+        <option value="bundled-js-predefined-d6986cc7102b-7c0b70fcd90d-JavaScript-IU-242.21829.142" />
       </set>
     </attachedChunks>
   </component>
@@ -273,6 +306,27 @@
       <workItem from="1722941138797" duration="890000" />
       <workItem from="1722952379923" duration="2901000" />
       <workItem from="1722994816960" duration="316000" />
+      <workItem from="1723027396445" duration="6762000" />
+      <workItem from="1723092733043" duration="15000" />
+      <workItem from="1723114182866" duration="14786000" />
+      <workItem from="1723168833516" duration="4866000" />
+      <workItem from="1723176962616" duration="2555000" />
+      <workItem from="1723196393725" duration="6831000" />
+      <workItem from="1723425349334" duration="438000" />
+      <workItem from="1723438693951" duration="65000" />
+      <workItem from="1723447306991" duration="9237000" />
+      <workItem from="1723459042371" duration="1394000" />
+      <workItem from="1723513229687" duration="9157000" />
+      <workItem from="1723535035694" duration="5462000" />
+      <workItem from="1723597507919" duration="3877000" />
+      <workItem from="1723601735340" duration="3749000" />
+      <workItem from="1723610302935" duration="661000" />
+      <workItem from="1723620209473" duration="12233000" />
+      <workItem from="1723684594153" duration="7300000" />
+      <workItem from="1723705578621" duration="1604000" />
+      <workItem from="1723772410690" duration="469000" />
+      <workItem from="1726119630847" duration="8939000" />
+      <workItem from="1726216491097" duration="8927000" />
     </task>
     <task id="LOCAL-00001" summary="CREATE : stock prediction usign lstm algorithm">
       <option name="closed" value="true" />
@@ -394,7 +448,15 @@
       <option name="project" value="LOCAL" />
       <updated>1722995100179</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="UPDATE : graph and confusion matrix">
+      <option name="closed" value="true" />
+      <created>1723622519310</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1723622519310</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -412,7 +474,8 @@
     <MESSAGE value="UPDATE : null on output" />
     <MESSAGE value="UPDATE : working for a day" />
     <MESSAGE value="UPDATE : 1000 epoch" />
-    <option name="LAST_COMMIT_MESSAGE" value="UPDATE : 1000 epoch" />
+    <MESSAGE value="UPDATE : graph and confusion matrix" />
+    <option name="LAST_COMMIT_MESSAGE" value="UPDATE : graph and confusion matrix" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

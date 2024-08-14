@@ -51,7 +51,9 @@ public class DatabaseHelper {
              ResultSet rs = pstmt.executeQuery()) {
             while (rs.next()) {
                 String tableName = rs.getString(1).replace("daily_data_", "");
-                tableNames.add(tableName);
+                if (hasValidClosePrice(tableName)) {
+                    tableNames.add(tableName);
+                }
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error fetching stock table names", e);
@@ -60,9 +62,26 @@ public class DatabaseHelper {
         return tableNames;
     }
 
+    private boolean hasValidClosePrice(String tableName) throws SQLException {
+        String query = "SELECT COUNT(*) FROM daily_data_" + tableName + " WHERE close >= 100";
+
+        try (Connection conn = connect();
+             PreparedStatement pstmt = conn.prepareStatement(query);
+             ResultSet rs = pstmt.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error checking close price for table " + tableName, e);
+            throw e;
+        }
+        return false;
+    }
+
+
     public List<double[]> loadStockData(String tableName) throws SQLException {
         List<double[]> stockData = new ArrayList<>();
-        String query = "SELECT date, close, high, low, open, volume, turnover FROM daily_data_" + tableName + " ORDER BY date";
+        String query = "SELECT date, close, high, low, open FROM daily_data_" + tableName + " ORDER BY date";
 
         try (Connection conn = connect();
              PreparedStatement pstmt = conn.prepareStatement(query);
@@ -73,15 +92,13 @@ public class DatabaseHelper {
                 double high = rs.getDouble("high");
                 double low = rs.getDouble("low");
                 double open = rs.getDouble("open");
-                double volume = rs.getDouble("volume");
-                double turnover = rs.getDouble("turnover");
 
                 double dateAsDouble = date.getTime();
 
                 // Use the normalized value from the map
                 double normalizedTableName = tableNameMap.get(tableName);
 
-                stockData.add(new double[]{normalizedTableName, close, high, low, open, volume, turnover, dateAsDouble});
+                stockData.add(new double[]{normalizedTableName, close, high, low, open, dateAsDouble});
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error loading stock data for table " + tableName, e);
@@ -127,7 +144,7 @@ public class DatabaseHelper {
                 double prediction = predictions[i];
                 double close = lastclose[i];
                 double pointChange = prediction - close;
-                double priceChange = pointChange / close;
+                double priceChange = (pointChange / close)*100;
 
                 pstmt.setString(1, stockSymbol);
                 pstmt.setDouble(2, prediction);

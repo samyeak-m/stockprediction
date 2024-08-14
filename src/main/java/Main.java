@@ -12,9 +12,11 @@ import java.util.*;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 
 public class Main {
-    static String version = "v8";
+    static String version = "v2";
 
     private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
     private static final String RESET = "\u001B[0m";
@@ -22,74 +24,119 @@ public class Main {
     private static final String BLUE = "\u001B[34m";
     private static final String YELLOW = "\u001B[33m";
 
-    static int hiddenSize = 250;
-    static int inputSize = 11;
+    static int hiddenSize = 5;
+    static int denseSize = 4;
+    static int inputSize = 8;
     static int outputSize = 1;
-    static int epoch = 1000;
-    static int batch = 32;
-    static double trainingRate = 0.0001;
+    static int epoch = 10;
+    static int batch = 16;
+    static double trainingRate = 0.01;
+    static double threshold = 0.5;
 
-    private static final String MODEL_FILE_PATH = "lstm_model" + version +"_"+epoch+".ser";
-
+    private static final String BASE_DIR = "output_"+version+"_e"+epoch+"_b"+batch+"_h"+hiddenSize;
+    private static final String MODEL_FILE_PATH = BASE_DIR + File.separator + "lstm_model" + version + "_" + epoch + ".ser";
 
     private static final List<Integer> epochList = new ArrayList<>();
     private static final List<Double> accuracyList = new ArrayList<>();
     private static final List<Double> lossList = new ArrayList<>();
 
+    private static final List<Double> validationAccuracyList = new ArrayList<>();
+    private static final List<Double> validationLossList = new ArrayList<>();
+
     private static double[] min;
     private static double[] max;
 
     public static void main(String[] args) throws SQLException, IOException, ClassNotFoundException {
+        createDirectory(BASE_DIR);
+
         ConsoleHandler handler = new ConsoleHandler();
         handler.setLevel(Level.INFO);
 
         DatabaseHelper dbHelper = new DatabaseHelper();
 
+        // Try to load the model
         LSTMNetwork lstm = LSTMNetwork.loadModel(MODEL_FILE_PATH);
         if (lstm == null) {
-            lstm = new LSTMNetwork(inputSize, hiddenSize, outputSize);
+            // Model not found, create a new model
+            List<String> tableNames = dbHelper.getAllStockTableNames();
+            List<double[]> allStockData = new ArrayList<>();
+
+            for (String tableName : tableNames) {
+                allStockData.addAll(dbHelper.loadStockData(tableName));
+            }
+
+            double[][] stockDataArray = allStockData.toArray(new double[0][]);
+
+            double[][] technicalIndicators = TechnicalIndicators.calculate(stockDataArray, 16, 3);
+
+            double[][] extendedData = DataPreprocessor.addFeatures(stockDataArray, technicalIndicators);
+
+            double[][][] preprocessedData = preprocessData(extendedData, 0.6);
+            double[][] trainData = preprocessedData[0];
+            double[][] testData = preprocessedData[1];
+
+            double[][] validationData = Arrays.copyOfRange(testData, 0, testData.length / 5);
+            double[][] finalTestData = Arrays.copyOfRange(testData, testData.length / 5, testData.length);
+
+            LOGGER.log(Level.INFO, BLUE + "Training data size: " + trainData.length + RESET);
+            LOGGER.log(Level.INFO, BLUE + "Validation data size: " + validationData.length + RESET);
+            LOGGER.log(Level.INFO, BLUE + "Final test data size: " + finalTestData.length + RESET);
+
+            double[] targets = new double[finalTestData.length];
+            for (int i = 0; i < targets.length; i++) {
+                targets[i] = finalTestData[i][1];
+            }
+
+            min = DataPreprocessor.calculateMin(extendedData);
+            max = DataPreprocessor.calculateMax(extendedData);
+
+            lstm = new LSTMNetwork(inputSize, hiddenSize, outputSize, denseSize, min, max);
+
+            double[] averages = trainModel(lstm, trainData, validationData, epoch, trainingRate, min, max);
+
+            double testAccuracy = testModel(lstm, finalTestData);
+            double finalTestLoss = calculateLoss(lstm, finalTestData);
+
+            LOGGER.log(Level.INFO, String.format(GREEN + "Final Test Accuracy: %.2f" + RESET, testAccuracy));
+            LOGGER.log(Level.INFO, String.format(GREEN + "Final Test Loss: %.2f" + RESET, finalTestLoss));
+
+            int[][] confusionMatrix = lstm.computeConfusionMatrix(finalTestData, finalTestData[finalTestData.length - 1][1], threshold);
+            double[] metrics = printConfusionMatrix(confusionMatrix);
+
+            double averageAccuracy = averages[0];
+            double averageLoss = averages[1];
+            double precision = metrics[0];
+            double recall = metrics[1];
+            double f1Score = metrics[2];
+
+            logFile(testAccuracy, finalTestLoss, averageAccuracy, averageLoss, confusionMatrix, precision, recall, f1Score, trainData, validationData, finalTestData);
+
+            System.out.println("Min: " + Arrays.toString(lstm.getMin()));
+            System.out.println("Max: " + Arrays.toString(lstm.getMax()));
+
+            lstm.saveModel(MODEL_FILE_PATH);
+
+            String accuracyChartDir = BASE_DIR + File.separator + "charts" + version + "_" + epoch + File.separator + "accuracy";
+            createDirectory(accuracyChartDir);
+
+            CustomChartUtils.saveAccuracyChart("Model Accuracy", epochList, accuracyList, validationAccuracyList, accuracyChartDir + File.separator + "model_accuracy.png", "Epochs", "Accuracy");
+            CustomChartUtils.saveLossChart("Model Loss", epochList, lossList, validationLossList, accuracyChartDir + File.separator + "model_loss.png", "Epochs", "Loss");
+
+        } else {
+            min = lstm.getMin();
+            max = lstm.getMax();
+            if (min == null || max == null) {
+                System.err.println("Model loaded, but min and max values are not initialized.");
+            }
+            LOGGER.log(Level.INFO, BLUE + "Model loaded successfully." + RESET);
         }
-
-        List<String> tableNames = dbHelper.getAllStockTableNames();
-        List<double[]> allStockData = new ArrayList<>();
-
-        for (String tableName : tableNames) {
-            allStockData.addAll(dbHelper.loadStockData(tableName));
-        }
-
-        double[][] stockDataArray = allStockData.toArray(new double[0][]);
-
-        double[][] technicalIndicators = TechnicalIndicators.calculate(stockDataArray, 8, 16, 3);
-
-        double[][] extendedData = DataPreprocessor.addFeatures(stockDataArray, technicalIndicators);
-
-        double[][][] preprocessedData = preprocessData(extendedData, 0.6);
-        double[][] trainData = preprocessedData[0];
-        double[][] testData = preprocessedData[1];
-
-        LOGGER.log(Level.INFO, BLUE + "Training data size: " + trainData.length + RESET);
-        LOGGER.log(Level.INFO, BLUE + "Test data size: " + testData.length + RESET);
-
-        trainModel(lstm, trainData, epoch, trainingRate);
-
-        double accuracy = testModel(lstm, testData);
-
-        lstm.saveModel(MODEL_FILE_PATH);
-
-        String accuracyChartDir = "charts" + version + "_" + epoch + File.separator + "accuracy";
-        String predictionChartDir = "charts" + version + "_" + epoch + File.separator + "predictions";
-        createDirectory(accuracyChartDir);
-        createDirectory(predictionChartDir);
-
-        CustomChartUtils.saveAccuracyChart("Model Accuracy", epochList, accuracyList, accuracyChartDir + File.separator + "model_accuracy.png", "Epochs", "Accuracy");
-        CustomChartUtils.saveLossChart("Model Loss", epochList, lossList, accuracyChartDir + File.separator + "model_loss.png", "Epochs", "Loss");
 
         try (Scanner scanner = new Scanner(System.in)) {
             while (true) {
                 System.out.print("Enter the stock symbol to predict: ");
                 String stockSymbol = scanner.nextLine();
 
-                predictAndSave(dbHelper, lstm, stockSymbol, predictionChartDir);
+                predictAndSave(dbHelper, lstm, stockSymbol);
 
                 System.out.print(BLUE + "Do you want to predict for another stock? (yes/no): " + RESET);
                 String response = scanner.nextLine();
@@ -102,7 +149,29 @@ public class Main {
         System.out.println(GREEN + "Program execution finished." + RESET);
     }
 
-    private static void trainModel(LSTMNetwork lstm, double[][] trainData, int epochs, double learningRate) {
+    private static double[] printConfusionMatrix(int[][] matrix) {
+
+        int tp = matrix[0][0];
+        int fn = matrix[1][0];
+        int fp = matrix[0][1];
+        int tn = matrix[1][1];
+
+        double precision = (tp + fp) > 0 ? (double) tp / (tp + fp) : 0;
+        double recall = (tp + fn) > 0 ? (double) tp / (tp + fn) : 0;
+        double f1Score = (precision + recall) > 0 ? 2 * (precision * recall) / (precision + recall) : 0;
+
+        System.out.println("Confusion Matrix:");
+        System.out.println("TP: " + tp + ", FN: " + fn);
+        System.out.println("FP: " + fp + ", TN: " + tn);
+        System.out.println("Precision: " + String.format("%.4f", precision));
+        System.out.println("Recall: " + String.format("%.4f", recall));
+        System.out.println("F1 Score: " + String.format("%.4f", f1Score));
+
+        return new double[]{precision, recall, f1Score};
+
+    }
+
+    private static double[] trainModel(LSTMNetwork lstm, double[][] trainData, double[][] validationData, int epochs, double learningRate,double[] min, double[] max) {
         LSTMTrainer trainer = new LSTMTrainer(lstm, learningRate);
         double prevAccuracy = 0;
         int sameCount = 0;
@@ -117,8 +186,6 @@ public class Main {
             int batchSize = batch;
             int batches = totalDataPoints / batchSize;
 
-            shuffleArray(trainData);
-
             double totalEpochLoss = 0;
 
             for (int batch = 0; batch < batches; batch++) {
@@ -132,13 +199,16 @@ public class Main {
 
                     if (output == null) {
                         LOGGER.severe("NaN value encountered during forward pass. Stopping training.");
-                        return;
+                        return new double[]{0, 0};
                     }
                 }
             }
 
-            double accuracy = testModel(lstm, trainData) * 100;
-            double epochLoss = calculateLoss(lstm, trainData) * 100;
+            double accuracy = testModel(lstm, trainData);
+            double epochLoss = calculateLoss(lstm, trainData);
+
+            double validationAccuracy = testModel(lstm, validationData);
+            double validationLoss = calculateValidationLoss(lstm, validationData);
 
             long endTime = System.currentTimeMillis();
             long elapsedTimeMillis = endTime - startTime;
@@ -150,63 +220,50 @@ public class Main {
             epochList.add(epoch);
             accuracyList.add(accuracy);
             lossList.add(epochLoss);
+            validationAccuracyList.add(validationAccuracy);
+            validationLossList.add(validationLoss);
 
-            LOGGER.log(Level.INFO, String.format(YELLOW + "Epoch %d: Accuracy = %.2f, Loss = %.2f, Time = %s" + RESET, epoch, accuracy, epochLoss, elapsedTime));
+            LOGGER.log(Level.INFO, String.format(YELLOW + "Epoch %d: Accuracy = %.2f, Loss = %.2f, Validation Accuracy = %.2f, Validation Loss = %.2f, Time = %s" + RESET,
+                    epoch, accuracy, epochLoss, validationAccuracy, validationLoss, elapsedTime));
 
             totalAccuracy += accuracy;
             totalLoss += epochLoss;
             epochCount++;
 
-            if (Math.abs(accuracy - prevAccuracy) < 0.01) {
+            if (validationAccuracy < 50) {
                 sameCount++;
             } else {
                 sameCount = 0;
             }
 
-            if (sameCount == 25 && accuracy < 0.70) {
-                lstm = new LSTMNetwork(inputSize, hiddenSize, outputSize);
-                trainer = new LSTMTrainer(lstm, learningRate);
-                sameCount = 0;
-            }
-            else if(sameCount == 5 && accuracy < 0.10){
-                lstm = new LSTMNetwork(inputSize, hiddenSize, outputSize);
-                trainer = new LSTMTrainer(lstm, learningRate);
-                sameCount = 0;
-            }
-            else if(sameCount == 10 && accuracy < 0.20){
-                lstm = new LSTMNetwork(inputSize, hiddenSize, outputSize);
-                trainer = new LSTMTrainer(lstm, learningRate);
-                sameCount = 0;
-            }
-            else if(sameCount == 15 && accuracy < 0.30){
-                lstm = new LSTMNetwork(inputSize, hiddenSize, outputSize);
-                trainer = new LSTMTrainer(lstm, learningRate);
-                sameCount = 0;
-            }
-            else if(sameCount == 20 && accuracy < 0.60){
-                lstm = new LSTMNetwork(inputSize, hiddenSize, outputSize);
-                trainer = new LSTMTrainer(lstm, learningRate);
-                sameCount = 0;
-            }
-            else if(accuracy > 0.99){
-                lstm = new LSTMNetwork(inputSize, hiddenSize, outputSize);
-                trainer = new LSTMTrainer(lstm, learningRate);
+            if (sameCount >= 20) {
+                lstm.updateWeightsAndBiases(learningRate);
+                lstm.resetGradients();
                 sameCount = 0;
             }
 
-            prevAccuracy = accuracy;
+            prevAccuracy = validationAccuracy;
         }
 
-        // Calculate average accuracy and loss
         double averageAccuracy = totalAccuracy / epochCount;
         double averageLoss = totalLoss / epochCount;
 
-        LOGGER.log(Level.INFO, String.format(GREEN + "Overall Average Accuracy: %.2f%%" + RESET, averageAccuracy));
-        LOGGER.log(Level.INFO, String.format(GREEN + "Overall Average Loss: %.2f%%" + RESET, averageLoss));
+        LOGGER.log(Level.INFO, String.format(GREEN + "Overall Average Accuracy: %.2f" + RESET, averageAccuracy));
+        LOGGER.log(Level.INFO, String.format(GREEN + "Overall Average Loss: %.2f" + RESET, averageLoss));
+
+        return new double[]{averageAccuracy, averageLoss};
     }
 
+
+
+    private static double calculateValidationLoss(LSTMNetwork lstm, double[][] validationData) {
+        return calculateLoss(lstm, validationData);
+    }
+
+
     private static double testModel(LSTMNetwork lstm, double[][] testData) {
-        int correctPredictions = 0;
+        double totalAccuracy = 0;
+
         for (int i = 0; i < testData.length - 1; i++) {
             double[] input = Arrays.copyOf(testData[i], testData[i].length - 1);
             double[] output = lstm.forward(input, lstm.getHiddenState(), lstm.getCellState());
@@ -214,17 +271,53 @@ public class Main {
                 continue;
             }
             double prediction = output[0];
-            double actual = testData[i + 1][1]; // Second value of the next input
+            double actual = testData[i + 1][1];
+            double currentClosePrice = testData[i][1];
 
-            if (Math.abs(prediction - actual) < 0.01 * actual) {
-                correctPredictions++;
-            }
+
+            double lastClosePrice = testData[i][1];
+            prediction = applyPredictionConstraints(prediction, lastClosePrice);
+
+            double accuracy = calculatePredictionAccuracy(prediction, actual, currentClosePrice);
+            totalAccuracy += accuracy;
         }
-        return (double) correctPredictions / (testData.length - 1);
+        return totalAccuracy / (testData.length - 1);
     }
+
+    private static double applyPredictionConstraints(double prediction, double lastClosePrice) {
+        double maxChange = 0.10 * lastClosePrice;
+        double minPrice = lastClosePrice * 0.90;
+        double maxPrice = lastClosePrice * 1.09;
+
+        if (prediction < minPrice) {
+            prediction = minPrice;
+        } else if (prediction > maxPrice) {
+            prediction = maxPrice;
+        }
+
+        prediction = Math.max(0, Math.min(1, prediction));
+
+        return prediction;
+    }
+
+
+    private static double calculatePredictionAccuracy(double prediction, double actual, double currentClosePrice) {
+        double maxChange = 0.10 * currentClosePrice;
+        double diff = Math.abs(prediction - actual);;
+
+        if (diff > maxChange) {
+            return 0;
+        }
+
+        double accuracy = 1 - (diff / maxChange);
+        return accuracy;
+    }
+
+
 
     private static double calculateLoss(LSTMNetwork lstm, double[][] data) {
         double totalLoss = 0;
+        double maxChange = 0.10; // 10% tolerance
 
         for (int i = 0; i < data.length - 1; i++) {
             double[] input = Arrays.copyOf(data[i], data[i].length - 1);
@@ -232,8 +325,8 @@ public class Main {
             double[] output = lstm.forward(input, lstm.getHiddenState(), lstm.getCellState());
             double prediction = output[0];
 
-            double minPrice = lastClosePrice * 0.90;
-            double maxPrice = lastClosePrice * 1.10;
+            double minPrice = lastClosePrice * (1 - maxChange);
+            double maxPrice = lastClosePrice * (1 + maxChange);
 
             if (prediction < minPrice) {
                 prediction = minPrice;
@@ -242,18 +335,60 @@ public class Main {
             }
 
             double actual = data[i + 1][1];
-            totalLoss += Math.pow(actual - prediction, 2);
+            double diff = Math.abs(prediction - actual);
+            double tolerance = maxChange * actual;
+
+            double loss;
+            if (diff > tolerance) {
+                loss = 1.0;
+            } else {
+                loss = diff / tolerance;
+            }
+
+            totalLoss += loss;
         }
 
         return totalLoss / (data.length - 1);
     }
 
+    public static void logFile(double finalTestAccuracy, double finalTestLoss, double averageAccuracy, double averageLoss, int[][] confusionMatrix,
+                               double precision, double recall, double f1Score, double[][] trainData, double[][] validationData, double[][] finalTestData) {
+        String logFileName = BASE_DIR + File.separator + "confusion.txt";
 
-    private static void shuffleArray(double[][] array) {
-        List<double[]> list = Arrays.asList(array);
-        Collections.shuffle(list);
-        list.toArray(array);
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(logFileName))) {
+
+            writer.write("hiddenSize: " + hiddenSize + ", epoch: " + epoch + ", batch: " + batch + ", trainingRate: " + trainingRate + "\n");
+            writer.write("Training data size: " + trainData.length + "\n");
+            writer.write("Validation data size: " + validationData.length + "\n");
+            writer.write("Final test data size: " + finalTestData.length + "\n");
+
+            writer.write("Final Test Accuracy: " + String.format("%.2f", finalTestAccuracy) + "\n");
+            writer.write("Final Test Loss: " + String.format("%.2f", finalTestLoss) + "\n");
+            writer.write("Overall Average Accuracy: " + String.format("%.2f", averageAccuracy) + "\n");
+            writer.write("Overall Average Loss: " + String.format("%.2f", averageLoss) + "\n");
+
+            int tp = confusionMatrix[0][0];
+            int fn = confusionMatrix[1][0];
+            int fp = confusionMatrix[0][1];
+            int tn = confusionMatrix[1][1];
+
+            writer.write("Confusion Matrix:\n");
+            writer.write("TP: " + tp + ", FN: " + fn + "\n");
+            writer.write("FP: " + fp + ", TN: " + tn + "\n");
+            writer.write("Precision: " + String.format("%.4f", precision) + "\n");
+            writer.write("Recall: " + String.format("%.4f", recall) + "\n");
+            writer.write("F1 Score: " + String.format("%.4f", f1Score) + "\n");
+
+            for (int i = 0; i < epochList.size(); i++) {
+                writer.write(String.format("Epoch %d: Accuracy = %.2f, Loss = %.2f, Validation Accuracy = %.2f, Validation Loss = %.2f\n",
+                        epochList.get(i), accuracyList.get(i), lossList.get(i), validationAccuracyList.get(i), validationLossList.get(i)));
+            }
+
+        } catch (IOException e) {
+            System.err.println("Error writing to file: " + e.getMessage());
+        }
     }
+
 
     private static void createDirectory(String directory) {
         File dir = new File(directory);
@@ -262,11 +397,11 @@ public class Main {
         }
     }
 
-    private static void predictAndSave(DatabaseHelper dbHelper, LSTMNetwork lstm, String stockSymbol, String predictionChartDir) throws SQLException, IOException {
+    private static void predictAndSave(DatabaseHelper dbHelper, LSTMNetwork lstm, String stockSymbol) throws SQLException, IOException {
         List<double[]> stockData = dbHelper.loadStockData(stockSymbol);
         double[][] stockDataArray = stockData.toArray(new double[0][]);
 
-        double[][] technicalIndicators = TechnicalIndicators.calculate(stockDataArray, 8, 16, 3);
+        double[][] technicalIndicators = TechnicalIndicators.calculate(stockDataArray,  16, 3);
 
         double[][] extendedData = DataPreprocessor.addFeatures(stockDataArray, technicalIndicators);
 
@@ -281,14 +416,8 @@ public class Main {
             double prediction = output[0];
 
             double lastClosePrice = extendedData[extendedData.length - 1][1];
-            double minPrice = lastClosePrice * 0.90;
-            double maxPrice = lastClosePrice * 1.10;
 
-            if (prediction < minPrice) {
-                prediction = minPrice;
-            } else if (prediction > maxPrice) {
-                prediction = maxPrice;
-            }
+            prediction = applyPredictionConstraints(prediction, lastClosePrice);
 
             predictions[i] = prediction;
 
@@ -319,9 +448,29 @@ public class Main {
         min = DataPreprocessor.calculateMin(data);
         max = DataPreprocessor.calculateMax(data);
 
+        double bufferPercentage = 0.40;
+
+        for (int i = 1; i < min.length; i++) {
+            double actualMin = min[i];
+            double actualMax = max[i];
+
+            double bufferedMin = actualMin - (bufferPercentage * (actualMax - actualMin));
+            double bufferedMax = actualMax + (bufferPercentage * (actualMax - actualMin));
+
+            if (bufferedMin < 0) {
+                bufferedMin = 0;
+            }
+
+            min[i] = bufferedMin;
+            max[i] = bufferedMax;
+        }
+
+
         trainData = DataPreprocessor.normalize(trainData, min, max);
         testData = DataPreprocessor.normalize(testData, min, max);
 
         return new double[][][]{trainData, testData};
     }
+
+
 }

@@ -1,0 +1,89 @@
+hiddenSize: 10, epoch: 75, batch: 16, trainingRate: 0.001
+Training data size: 269557
+Validation data size: 35941
+Final test data size: 143765
+Final Test Accuracy: 0.10
+Final Test Loss: 0.91
+Overall Average Accuracy: 0.09
+Overall Average Loss: 0.91
+Confusion Matrix:
+TP: 0, FN: 123338
+FP: 0, TN: 20427
+Precision: 0.0000
+Recall: 0.0000
+F1 Score: 0.0000
+Epoch 0: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 1: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 2: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 3: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 4: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 5: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 6: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 7: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 8: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 9: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 10: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 11: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 12: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 13: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 14: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 15: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 16: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 17: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 18: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 19: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 20: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 21: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 22: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 23: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 24: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 25: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 26: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 27: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 28: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 29: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 30: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 31: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 32: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 33: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 34: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 35: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 36: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 37: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 38: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 39: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 40: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 41: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 42: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 43: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 44: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 45: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 46: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 47: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 48: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 49: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 50: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 51: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 52: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 53: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 54: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 55: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 56: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 57: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 58: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 59: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 60: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 61: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 62: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 63: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 64: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 65: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 66: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 67: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 68: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 69: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 70: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 71: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 72: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 73: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
+Epoch 74: Accuracy = 0.09, Loss = 0.91, Validation Accuracy = 0.09, Validation Loss = 0.92
