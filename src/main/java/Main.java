@@ -111,9 +111,6 @@ public class Main {
 
             logFile(testAccuracy, finalTestLoss, averageAccuracy, averageLoss, confusionMatrix, precision, recall, f1Score, trainData, validationData, finalTestData);
 
-            System.out.println("Min: " + Arrays.toString(lstm.getMin()));
-            System.out.println("Max: " + Arrays.toString(lstm.getMax()));
-
             lstm.saveModel(MODEL_FILE_PATH);
 
             String accuracyChartDir = BASE_DIR + File.separator + "charts" + version + "_" + epoch + File.separator + "accuracy";

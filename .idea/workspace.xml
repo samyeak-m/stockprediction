@@ -9,39 +9,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8a665f72-76be-45db-8f3b-b47e13b27452" name="Changes" comment="UPDATE : graph and confusion matrix">
-      <change afterPath="$PROJECT_DIR$/normal.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output_v1_e100_b16_h15/chartsv1_100/accuracy/model_accuracy.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output_v1_e100_b16_h15/chartsv1_100/accuracy/model_loss.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output_v1_e100_b16_h15/confusion.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output_v1_e100_b16_h15/lstm_modelv1_100.ser" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output_v1_e10_b16_h30/chartsv1_10/accuracy/model_accuracy.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output_v1_e10_b16_h30/chartsv1_10/accuracy/model_loss.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output_v1_e10_b16_h30/confusion.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output_v1_e10_b16_h30/lstm_modelv1_10.ser" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output_v1_e250_b32_h25/chartsv1_250/accuracy/model_accuracy.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output_v1_e250_b32_h25/chartsv1_250/accuracy/model_loss.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output_v1_e250_b32_h25/confusion.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output_v1_e250_b32_h25/lstm_modelv1_250.ser" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output_v1_e25_b16_h5/chartsv1_25/accuracy/model_accuracy.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output_v1_e25_b16_h5/chartsv1_25/accuracy/model_loss.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output_v1_e25_b16_h5/confusion.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output_v1_e25_b16_h5/lstm_modelv1_25.ser" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output_v1_e50_b32_h10/chartsv1_50/accuracy/model_accuracy.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output_v1_e50_b32_h10/chartsv1_50/accuracy/model_loss.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output_v1_e50_b32_h10/confusion.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output_v1_e50_b32_h10/lstm_modelv1_50.ser" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output_v1_e75_b16_h10/chartsv1_75/accuracy/model_accuracy.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output_v1_e75_b16_h10/chartsv1_75/accuracy/model_loss.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output_v1_e75_b16_h10/confusion.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/output_v1_e75_b16_h10/lstm_modelv1_75.ser" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    <list default="true" id="8a665f72-76be-45db-8f3b-b47e13b27452" name="Changes" comment="UPDATE : model load">
       <change beforePath="$PROJECT_DIR$/src/main/java/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/database/DatabaseHelper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/database/DatabaseHelper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/lstm/LSTMNetwork.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/lstm/LSTMNetwork.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/lstm/LSTMTrainer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/lstm/LSTMTrainer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/util/CustomChartUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/util/CustomChartUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.properties" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -326,7 +295,7 @@
       <workItem from="1723705578621" duration="1604000" />
       <workItem from="1723772410690" duration="469000" />
       <workItem from="1726119630847" duration="8939000" />
-      <workItem from="1726216491097" duration="8927000" />
+      <workItem from="1726216491097" duration="9264000" />
     </task>
     <task id="LOCAL-00001" summary="CREATE : stock prediction usign lstm algorithm">
       <option name="closed" value="true" />
@@ -456,7 +425,15 @@
       <option name="project" value="LOCAL" />
       <updated>1723622519310</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="UPDATE : model load">
+      <option name="closed" value="true" />
+      <created>1726233935973</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1726233935973</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -475,7 +452,8 @@
     <MESSAGE value="UPDATE : working for a day" />
     <MESSAGE value="UPDATE : 1000 epoch" />
     <MESSAGE value="UPDATE : graph and confusion matrix" />
-    <option name="LAST_COMMIT_MESSAGE" value="UPDATE : graph and confusion matrix" />
+    <MESSAGE value="UPDATE : model load" />
+    <option name="LAST_COMMIT_MESSAGE" value="UPDATE : model load" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
