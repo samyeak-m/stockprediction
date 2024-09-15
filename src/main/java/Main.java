@@ -16,7 +16,7 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 
 public class Main {
-    static String version = "v2";
+    static String version = "v1";
 
     private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
     private static final String RESET = "\u001B[0m";
@@ -24,14 +24,16 @@ public class Main {
     private static final String BLUE = "\u001B[34m";
     private static final String YELLOW = "\u001B[33m";
 
-    static int hiddenSize = 5;
-    static int denseSize = 4;
+    static int hiddenSize = 50;
+    static int denseSize = 5;
     static int inputSize = 8;
     static int outputSize = 1;
-    static int epoch = 10;
-    static int batch = 16;
-    static double trainingRate = 0.01;
-    static double threshold = 0.5;
+    static int epoch = 1000;
+    static int batch = 64;
+    static double trainingRate = 0.1;
+
+    static double threshold = 0.1;
+    static int interval = 100;
 
     private static final String BASE_DIR = "output_"+version+"_e"+epoch+"_b"+batch+"_h"+hiddenSize;
     private static final String MODEL_FILE_PATH = BASE_DIR + File.separator + "lstm_model" + version + "_" + epoch + ".ser";
@@ -54,10 +56,8 @@ public class Main {
 
         DatabaseHelper dbHelper = new DatabaseHelper();
 
-        // Try to load the model
         LSTMNetwork lstm = LSTMNetwork.loadModel(MODEL_FILE_PATH);
         if (lstm == null) {
-            // Model not found, create a new model
             List<String> tableNames = dbHelper.getAllStockTableNames();
             List<double[]> allStockData = new ArrayList<>();
 
@@ -116,8 +116,8 @@ public class Main {
             String accuracyChartDir = BASE_DIR + File.separator + "charts" + version + "_" + epoch + File.separator + "accuracy";
             createDirectory(accuracyChartDir);
 
-            CustomChartUtils.saveAccuracyChart("Model Accuracy", epochList, accuracyList, validationAccuracyList, accuracyChartDir + File.separator + "model_accuracy.png", "Epochs", "Accuracy");
-            CustomChartUtils.saveLossChart("Model Loss", epochList, lossList, validationLossList, accuracyChartDir + File.separator + "model_loss.png", "Epochs", "Loss");
+            CustomChartUtils.saveAccuracyChart("Model Accuracy", epochList, accuracyList, validationAccuracyList, accuracyChartDir + File.separator + "model_accuracy.png", "Epochs", "Accuracy",interval);
+            CustomChartUtils.saveLossChart("Model Loss", epochList, lossList, validationLossList, accuracyChartDir + File.separator + "model_loss.png", "Epochs", "Loss",interval);
 
         } else {
             min = lstm.getMin();
@@ -227,18 +227,6 @@ public class Main {
             totalLoss += epochLoss;
             epochCount++;
 
-            if (validationAccuracy < 50) {
-                sameCount++;
-            } else {
-                sameCount = 0;
-            }
-
-            if (sameCount >= 20) {
-                lstm.updateWeightsAndBiases(learningRate);
-                lstm.resetGradients();
-                sameCount = 0;
-            }
-
             prevAccuracy = validationAccuracy;
         }
 
@@ -282,9 +270,9 @@ public class Main {
     }
 
     private static double applyPredictionConstraints(double prediction, double lastClosePrice) {
-        double maxChange = 0.10 * lastClosePrice;
-        double minPrice = lastClosePrice * 0.90;
-        double maxPrice = lastClosePrice * 1.09;
+        double maxChange = 0.08 * lastClosePrice;
+        double minPrice = lastClosePrice * 0.92;
+        double maxPrice = lastClosePrice * 1.08;
 
         if (prediction < minPrice) {
             prediction = minPrice;
@@ -299,7 +287,7 @@ public class Main {
 
 
     private static double calculatePredictionAccuracy(double prediction, double actual, double currentClosePrice) {
-        double maxChange = 0.10 * currentClosePrice;
+        double maxChange = 0.08 * currentClosePrice;
         double diff = Math.abs(prediction - actual);;
 
         if (diff > maxChange) {
@@ -314,7 +302,7 @@ public class Main {
 
     private static double calculateLoss(LSTMNetwork lstm, double[][] data) {
         double totalLoss = 0;
-        double maxChange = 0.10; // 10% tolerance
+        double maxChange = 0.08;
 
         for (int i = 0; i < data.length - 1; i++) {
             double[] input = Arrays.copyOf(data[i], data[i].length - 1);
@@ -432,7 +420,6 @@ public class Main {
             actualPrices[i] = stockDataArray[stockDataArray.length - 1][1];
         }
 
-        // Save predictions to chart
         dbHelper.savePredictions(stockSymbol, predictions, actualPrices);
         System.out.println(GREEN + "Predictions saved for stock: " + stockSymbol + RESET);
     }

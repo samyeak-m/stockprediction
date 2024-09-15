@@ -10,7 +10,38 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8a665f72-76be-45db-8f3b-b47e13b27452" name="Changes" comment="UPDATE : model load">
+      <change afterPath="$PROJECT_DIR$/output_v1_e10_b16_h25/chartsv1_10/accuracy/model_accuracy.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e10_b16_h25/chartsv1_10/accuracy/model_loss.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e10_b16_h25/confusion.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e10_b16_h25/lstm_modelv1_10.ser" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e100_b16_h15/chartsv1_100/accuracy/model_accuracy.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e100_b16_h15/chartsv1_100/accuracy/model_loss.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e100_b16_h15/confusion.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e100_b16_h15/lstm_modelv1_100.ser" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e10_b16_h30/chartsv1_10/accuracy/model_accuracy.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e10_b16_h30/chartsv1_10/accuracy/model_loss.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e10_b16_h30/confusion.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e10_b16_h30/lstm_modelv1_10.ser" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e250_b32_h25/chartsv1_250/accuracy/model_accuracy.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e250_b32_h25/chartsv1_250/accuracy/model_loss.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e250_b32_h25/confusion.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e250_b32_h25/lstm_modelv1_250.ser" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e25_b16_h5/chartsv1_25/accuracy/model_accuracy.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e25_b16_h5/chartsv1_25/accuracy/model_loss.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e25_b16_h5/confusion.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e25_b16_h5/lstm_modelv1_25.ser" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e50_b32_h10/chartsv1_50/accuracy/model_accuracy.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e50_b32_h10/chartsv1_50/accuracy/model_loss.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e50_b32_h10/confusion.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e50_b32_h10/lstm_modelv1_50.ser" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e75_b16_h10/chartsv1_75/accuracy/model_accuracy.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e75_b16_h10/chartsv1_75/accuracy/model_loss.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e75_b16_h10/confusion.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e75_b16_h10/lstm_modelv1_75.ser" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/lstm/LSTMNetwork.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/lstm/LSTMNetwork.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/util/CustomChartUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/util/CustomChartUtils.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -65,7 +96,7 @@
   &quot;keyToString&quot;: {
     &quot;ASKED_ADD_EXTERNAL_FILES&quot;: &quot;true&quot;,
     &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;Application.Main.executor&quot;: &quot;Debug&quot;,
+    &quot;Application.Main.executor&quot;: &quot;Run&quot;,
     &quot;Maven.StockPrediction [assembly:single].executor&quot;: &quot;Debug&quot;,
     &quot;Maven.StockPrediction [clean].executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
@@ -295,7 +326,11 @@
       <workItem from="1723705578621" duration="1604000" />
       <workItem from="1723772410690" duration="469000" />
       <workItem from="1726119630847" duration="8939000" />
-      <workItem from="1726216491097" duration="9264000" />
+      <workItem from="1726216491097" duration="11701000" />
+      <workItem from="1726238789951" duration="3599000" />
+      <workItem from="1726316533914" duration="5697000" />
+      <workItem from="1726330913499" duration="2095000" />
+      <workItem from="1726388984118" duration="300000" />
     </task>
     <task id="LOCAL-00001" summary="CREATE : stock prediction usign lstm algorithm">
       <option name="closed" value="true" />
@@ -433,7 +468,15 @@
       <option name="project" value="LOCAL" />
       <updated>1726233935973</updated>
     </task>
-    <option name="localTasksCounter" value="18" />
+    <task id="LOCAL-00018" summary="UPDATE : model load">
+      <option name="closed" value="true" />
+      <created>1726234148854</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1726234148854</updated>
+    </task>
+    <option name="localTasksCounter" value="19" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

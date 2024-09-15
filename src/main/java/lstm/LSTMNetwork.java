@@ -35,24 +35,6 @@ public class LSTMNetwork implements Serializable {
     private int outputSize;
     private int denseSize;
 
-    private double[][] weightGradientsInputGate;
-    private double[][] weightGradientsForgetGate;
-    private double[][] weightGradientsOutputGate;
-    private double[][] weightGradientsCellGate;
-
-    private double[][] weightGradientsHiddenInputGate;
-    private double[][] weightGradientsHiddenForgetGate;
-    private double[][] weightGradientsHiddenOutputGate;
-    private double[][] weightGradientsHiddenCellGate;
-
-    private double[] biasGradientsInputGate;
-    private double[] biasGradientsForgetGate;
-    private double[] biasGradientsOutputGate;
-    private double[] biasGradientsCellGate;
-
-    private double[][] weightGradientsOutput;
-    private double[] biasGradientsOutput;
-
     private double[] dHiddenState;
     private double[] dCellState;
     private double[] dInputGate;
@@ -99,7 +81,6 @@ public class LSTMNetwork implements Serializable {
         weightsOutput = new double[outputSize][hiddenSize];
         biasOutput = new double[outputSize];
 
-        // Initialize weights with small random values
         for (int i = 0; i < hiddenSize; i++) {
             for (int j = 0; j < inputSize; j++) {
                 weightsInputGate[i][j] = random.nextGaussian() * Math.sqrt(2.0 / (inputSize + hiddenSize));
@@ -132,72 +113,6 @@ public class LSTMNetwork implements Serializable {
         Arrays.fill(biasOutputGate, 0.01);
         Arrays.fill(biasCellGate, 0.01);
         Arrays.fill(biasOutput, 0.01);
-    }
-
-    private void initializeGradients() {
-        weightGradientsInputGate = new double[hiddenSize][inputSize];
-        weightGradientsForgetGate = new double[hiddenSize][inputSize];
-        weightGradientsOutputGate = new double[hiddenSize][inputSize];
-        weightGradientsCellGate = new double[hiddenSize][inputSize];
-
-        weightGradientsHiddenInputGate = new double[hiddenSize][hiddenSize];
-        weightGradientsHiddenForgetGate = new double[hiddenSize][hiddenSize];
-        weightGradientsHiddenOutputGate = new double[hiddenSize][hiddenSize];
-        weightGradientsHiddenCellGate = new double[hiddenSize][hiddenSize];
-
-        biasGradientsInputGate = new double[hiddenSize];
-        biasGradientsForgetGate = new double[hiddenSize];
-        biasGradientsOutputGate = new double[hiddenSize];
-        biasGradientsCellGate = new double[hiddenSize];
-
-        weightGradientsOutput = new double[outputSize][hiddenSize];
-        biasGradientsOutput = new double[outputSize];
-    }
-
-    public void updateWeightsAndBiases(double learningRate) {
-        // Update weights using existing methods
-        updateWeights(weightsInputGate, weightGradientsInputGate, learningRate);
-        updateWeights(weightsForgetGate, weightGradientsForgetGate, learningRate);
-        updateWeights(weightsOutputGate, weightGradientsOutputGate, learningRate);
-        updateWeights(weightsCellGate, weightGradientsCellGate, learningRate);
-
-        updateWeights(weightsHiddenInputGate, weightGradientsHiddenInputGate, learningRate);
-        updateWeights(weightsHiddenForgetGate, weightGradientsHiddenForgetGate, learningRate);
-        updateWeights(weightsHiddenOutputGate, weightGradientsHiddenOutputGate, learningRate);
-        updateWeights(weightsHiddenCellGate, weightGradientsHiddenCellGate, learningRate);
-
-        // Update biases using existing methods
-        updateBiases(biasInputGate, biasGradientsInputGate, learningRate);
-        updateBiases(biasForgetGate, biasGradientsForgetGate, learningRate);
-        updateBiases(biasOutputGate, biasGradientsOutputGate, learningRate);
-        updateBiases(biasCellGate, biasGradientsCellGate, learningRate);
-
-        updateWeights(weightsOutput, weightGradientsOutput, learningRate);
-        updateBiases(biasOutput, biasGradientsOutput, learningRate);
-    }
-
-    public void resetGradients() {
-        // Reset weight gradients
-        for (int i = 0; i < weightGradientsInputGate.length; i++) {
-            Arrays.fill(weightGradientsInputGate[i], 0);
-            Arrays.fill(weightGradientsForgetGate[i], 0);
-            Arrays.fill(weightGradientsOutputGate[i], 0);
-            Arrays.fill(weightGradientsCellGate[i], 0);
-        }
-        for (int i = 0; i < weightGradientsHiddenInputGate.length; i++) {
-            Arrays.fill(weightGradientsHiddenInputGate[i], 0);
-            Arrays.fill(weightGradientsHiddenForgetGate[i], 0);
-            Arrays.fill(weightGradientsHiddenOutputGate[i], 0);
-            Arrays.fill(weightGradientsHiddenCellGate[i], 0);
-        }
-        Arrays.fill(biasGradientsInputGate, 0);
-        Arrays.fill(biasGradientsForgetGate, 0);
-        Arrays.fill(biasGradientsOutputGate, 0);
-        Arrays.fill(biasGradientsCellGate, 0);
-        for (int i = 0; i < weightGradientsOutput.length; i++) {
-            Arrays.fill(weightGradientsOutput[i], 0);
-        }
-        Arrays.fill(biasGradientsOutput, 0);
     }
 
     private double leakyRelu(double x) {
@@ -295,6 +210,7 @@ public class LSTMNetwork implements Serializable {
         for (int i = 1; i < denseSize; i++) {
             output = leakyRelu(dotProduct(weightsOutput, output));
         }
+
 
         if (output == null) {
             System.err.println("Error: Output is null after forward pass");
@@ -399,7 +315,7 @@ public class LSTMNetwork implements Serializable {
             return;
         }
 
-        clipGradients(gradients, 5.0);
+        clipGradients(gradients, 20);
 
         double[][] dWeightsOutput = outerProduct(dOutput, hiddenState);
         double[][] dWeightsInputGate = outerProduct(dInputGate, input);
@@ -593,10 +509,6 @@ public class LSTMNetwork implements Serializable {
         this.min = min;
     }
 
-    public void setMax(double[] max) {
-        this.max = max;
-    }
-
     public void saveModel(String filePath) {
         try (FileOutputStream fileOut = new FileOutputStream(filePath);
              ObjectOutputStream objectOut = new ObjectOutputStream(fileOut)) {
@@ -616,6 +528,7 @@ public class LSTMNetwork implements Serializable {
             if (model.getMin() == null || model.getMax() == null) {
                 System.err.println("Model loaded, but min and max values are not initialized.");
             }
+
             return model;
         } catch (IOException | ClassNotFoundException e) {
             System.err.println(e);
