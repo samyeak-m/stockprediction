@@ -10,7 +10,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8a665f72-76be-45db-8f3b-b47e13b27452" name="Changes" comment="UPDATE : model load">
+      <change afterPath="$PROJECT_DIR$/output_v1_e10_b16_h20/chartsv1_10/accuracy/model_accuracy.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e10_b16_h20/chartsv1_10/accuracy/model_loss.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e10_b16_h20/confusion.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/output_v1_e10_b16_h20/lstm_modelv1_10.ser" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e10_b16_h25/chartsv1_10/accuracy/model_accuracy.png" beforeDir="false" afterPath="$PROJECT_DIR$/output_v1_e10_b16_h25/chartsv1_10/accuracy/model_accuracy.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e10_b16_h25/chartsv1_10/accuracy/model_loss.png" beforeDir="false" afterPath="$PROJECT_DIR$/output_v1_e10_b16_h25/chartsv1_10/accuracy/model_loss.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e10_b16_h25/lstm_modelv1_10.ser" beforeDir="false" afterPath="$PROJECT_DIR$/output_v1_e10_b16_h25/lstm_modelv1_10.ser" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Main.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -28,7 +35,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="reluactive" />
+        <entry key="$PROJECT_DIR$" value="working" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -62,32 +69,32 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_ADD_EXTERNAL_FILES&quot;: &quot;true&quot;,
-    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;Application.Main.executor&quot;: &quot;Debug&quot;,
-    &quot;Maven.StockPrediction [assembly:single].executor&quot;: &quot;Debug&quot;,
-    &quot;Maven.StockPrediction [clean].executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;working&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/samyeak/BCA/6thsem/project/test/stockprediction&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;onboarding.tips.debug.path&quot;: &quot;D:/samyeak/BCA/6thsem/project/StockPrediction/src/main/java/org/example/Main.java&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;SDKs&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;settings.qodana&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_ADD_EXTERNAL_FILES": "true",
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "Application.Main.executor": "Debug",
+    "Maven.StockPrediction [assembly:single].executor": "Debug",
+    "Maven.StockPrediction [clean].executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "git-widget-placeholder": "stock",
+    "ignore.virus.scanning.warn.message": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "D:/samyeak/BCA/6thsem/project/test/stockprediction",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "onboarding.tips.debug.path": "D:/samyeak/BCA/6thsem/project/StockPrediction/src/main/java/org/example/Main.java",
+    "project.structure.last.edited": "SDKs",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.2",
+    "settings.editor.selected.configurable": "settings.qodana",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="D:\samyeak\BCA\6thsem\project\test\stockprediction" />
@@ -304,7 +311,7 @@
       <workItem from="1726451546406" duration="37000" />
       <workItem from="1726563147535" duration="159000" />
       <workItem from="1726645495110" duration="8000" />
-      <workItem from="1726817162765" duration="1097000" />
+      <workItem from="1726817162765" duration="5134000" />
     </task>
     <task id="LOCAL-00001" summary="CREATE : stock prediction usign lstm algorithm">
       <option name="closed" value="true" />
@@ -458,7 +465,15 @@
       <option name="project" value="LOCAL" />
       <updated>1726389324024</updated>
     </task>
-    <option name="localTasksCounter" value="20" />
+    <task id="LOCAL-00020" summary="UPDATE : model load">
+      <option name="closed" value="true" />
+      <created>1726818553176</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1726818553176</updated>
+    </task>
+    <option name="localTasksCounter" value="21" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
