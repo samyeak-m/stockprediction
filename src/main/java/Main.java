@@ -127,7 +127,10 @@ public class Main {
 
             String accuracyChartDir = BASE_DIR + File.separator + "charts" + version + "_" + epoch + File.separator + "accuracy";
             createDirectory(accuracyChartDir);
+            String confusionMatrixChartDir = BASE_DIR + File.separator + "charts" + version + "_" + epoch + File.separator + "confusion_matrix";
+            createDirectory(confusionMatrixChartDir);
 
+            CustomChartUtils.saveConfusionMatrixChart("Confusion Matrix", confusionMatrix, confusionMatrixChartDir + File.separator + "confusion_matrix.png");
             CustomChartUtils.saveAccuracyChart("Model Accuracy", epochList, accuracyList, validationAccuracyList, accuracyChartDir + File.separator + "model_accuracy.png", "Epochs", "Accuracy", interval);
             CustomChartUtils.saveLossChart("Model Loss", epochList, lossList, validationLossList, accuracyChartDir + File.separator + "model_loss.png", "Epochs", "Loss", interval);
 
