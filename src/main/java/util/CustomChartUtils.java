@@ -3,10 +3,8 @@ package util;
 import org.jfree.chart.*;
 import org.jfree.chart.plot.*;
 import org.jfree.chart.renderer.xy.*;
-import org.jfree.chart.axis.*;
+import org.jfree.chart.axis.NumberAxis;
 import org.jfree.data.xy.*;
-import org.jfree.chart.renderer.category.BarRenderer;
-import org.jfree.data.category.DefaultCategoryDataset;
 
 import java.awt.Color;
 import java.io.File;
@@ -98,39 +96,6 @@ public class CustomChartUtils {
             }
         }
         return max;
-    }
-
-    public static void saveConfusionMatrixChart(String title, int[][] confusionMatrix, String filePath) {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-
-        // Populate dataset with confusion matrix values
-        String[] classes = {"Positive", "Negative"};
-        dataset.addValue(confusionMatrix[0][0], "True Positive", classes[0]);  // TP
-        dataset.addValue(confusionMatrix[0][1], "False Positive", classes[1]);  // FP
-        dataset.addValue(confusionMatrix[1][0], "False Negative", classes[0]);  // FN
-        dataset.addValue(confusionMatrix[1][1], "True Negative", classes[1]);  // TN
-
-        // Create the chart
-        JFreeChart chart = ChartFactory.createBarChart(title, "Predicted Class", "Count", dataset);
-
-        // Customize plot for confusion matrix (color and appearance)
-        CategoryPlot plot = chart.getCategoryPlot();
-        plot.setRangeGridlinePaint(Color.BLACK);
-
-        BarRenderer renderer = new BarRenderer();
-        renderer.setSeriesPaint(0, Color.GREEN);  // True Positive
-        renderer.setSeriesPaint(1, Color.RED);    // False Positive / False Negative
-        renderer.setSeriesPaint(2, Color.BLUE);   // True Negative
-        plot.setRenderer(renderer);
-
-        // Customize axis
-        CategoryAxis domainAxis = plot.getDomainAxis();
-        domainAxis.setCategoryMargin(0.2);
-
-        ValueAxis rangeAxis = plot.getRangeAxis();
-        rangeAxis.setUpperMargin(0.15);  // Adjust for visual clarity
-
-        saveChart(chart, filePath);
     }
 
     private static void saveChart(JFreeChart chart, String filePath) {

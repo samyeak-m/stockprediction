@@ -9,7 +9,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8a665f72-76be-45db-8f3b-b47e13b27452" name="Changes" comment="UPDATE : manual" />
+    <list default="true" id="8a665f72-76be-45db-8f3b-b47e13b27452" name="Changes" comment="UPDATE : confusion matrix">
+      <change afterPath="$PROJECT_DIR$/output_v1_e1000_b64_h75/chartsv1_1000/confusion_matrix/confusion_matrix.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e1000_b64_h75/chartsv1_1000/accuracy/model_accuracy.png" beforeDir="false" afterPath="$PROJECT_DIR$/output_v1_e1000_b64_h75/chartsv1_1000/accuracy/model_accuracy.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e1000_b64_h75/chartsv1_1000/accuracy/model_loss.png" beforeDir="false" afterPath="$PROJECT_DIR$/output_v1_e1000_b64_h75/chartsv1_1000/accuracy/model_loss.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e1000_b64_h75/confusion.txt" beforeDir="false" afterPath="$PROJECT_DIR$/output_v1_e1000_b64_h75/confusion.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output_v1_e1000_b64_h75/lstm_modelv1_1000.ser" beforeDir="false" afterPath="$PROJECT_DIR$/output_v1_e1000_b64_h75/lstm_modelv1_1000.ser" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/util/CustomChartUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/util/CustomChartUtils.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -25,7 +35,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="working" />
+        <entry key="$PROJECT_DIR$" value="stock" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -302,6 +312,9 @@
       <workItem from="1726563147535" duration="159000" />
       <workItem from="1726645495110" duration="8000" />
       <workItem from="1726817162765" duration="5271000" />
+      <workItem from="1726822731260" duration="1502000" />
+      <workItem from="1726969924197" duration="70000" />
+      <workItem from="1726972945171" duration="279000" />
     </task>
     <task id="LOCAL-00001" summary="CREATE : stock prediction usign lstm algorithm">
       <option name="closed" value="true" />
@@ -479,7 +492,15 @@
       <option name="project" value="LOCAL" />
       <updated>1726822529667</updated>
     </task>
-    <option name="localTasksCounter" value="23" />
+    <task id="LOCAL-00023" summary="UPDATE : confusion matrix">
+      <option name="closed" value="true" />
+      <created>1726822979098</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1726822979098</updated>
+    </task>
+    <option name="localTasksCounter" value="24" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -500,7 +521,8 @@
     <MESSAGE value="UPDATE : graph and confusion matrix" />
     <MESSAGE value="UPDATE : model load" />
     <MESSAGE value="UPDATE : manual" />
-    <option name="LAST_COMMIT_MESSAGE" value="UPDATE : manual" />
+    <MESSAGE value="UPDATE : confusion matrix" />
+    <option name="LAST_COMMIT_MESSAGE" value="UPDATE : confusion matrix" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
