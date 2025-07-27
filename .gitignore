@@ -36,3 +36,72 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+# Model files
+*.ser
+*.model
+*.pkl
+*.h5
+*.weights
+
+# Output directories
+output_*/
+charts*/
+predictions/
+
+# Specific model and chart directories based on your code
+output_v4_e100_b32_h20/
+charts*
+
+# Log files
+*.log
+*.txt
+normal.txt
+confusion.txt
+
+# Temporary files
+*.tmp
+*.temp
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Java compiled files
+*.class
+target/
+build/
+bin/
+
+# Database files (if you have local DB files)
+*.db
+*.sqlite
+*.sqlite3
+
+# Large data files
+*.csv
+*.json
+data/
+
+# Any backup files
+*.bak
+*.backup
+
+# Maven/Gradle
+.gradle/
+gradle/
+gradlew
+gradlew.bat
