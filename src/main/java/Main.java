@@ -20,7 +20,7 @@ import util.DataPreprocessor;
 import util.TechnicalIndicators;
 
 public class Main {
-    static String version = "v1";
+    static String version = "v9";
 
     private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
     private static final String RESET = "\u001B[0m";
@@ -30,13 +30,13 @@ public class Main {
 
     static int hiddenSize = 32;
     static int denseSize = 3;
-    static int inputSize = 18; // Changed from 8 to 18
+    static int inputSize = 18;
     static int outputSize = 1;
     static int epoch = 100;
     static int batch = 64;
-    static double trainingRate = 0.01; // Increased from 0.0001
+    static double trainingRate = 0.01;
 
-    static double threshold = 0.001; // FIXED: Reduced from 0.1 to 0.001 (0.1%)
+    static double threshold = 0.001;
     static int interval = 100;
 
     private static final String BASE_DIR = "output_"+version+"_e"+epoch+"_b"+batch+"_h"+hiddenSize;
