@@ -105,3 +105,39 @@ data/
 gradle/
 gradlew
 gradlew.bat
+
+# Model files and output directories from your Main.java
+output_v4_e100_b32_h20/
+lstm_model*.ser
+confusion.txt
+normal.txt
+
+# Dynamic output directories (based on your BASE_DIR pattern)
+output_v*/
+output_*_e*_b*_h*/
+
+# Charts directories (based on your chart generation code)
+charts*/
+**/charts*/
+**/accuracy/
+**/model_accuracy.png
+**/model_loss.png
+
+# Any prediction output files
+predictions/
+*.png
+
+# Log and temporary files
+*.log
+*.tmp
+
+# IDE and OS files
+.idea/
+.vscode/
+.DS_Store
+*.iml
+
+# Java compiled files
+*.class
+target/
+bin/

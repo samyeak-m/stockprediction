@@ -38,6 +38,13 @@ public class DataPreprocessor {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        for (int i = 0; i < data.length; i++) {
+            for (int j = 1; j < data[i].length; j++) {
+                if (!Double.isFinite(normalizedData[i][j])) {
+                    normalizedData[i][j] = 0.5;
+                }
+            }
+        }
         return normalizedData;
     }
 

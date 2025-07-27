@@ -1,13 +1,23 @@
 package database;
 
-import util.PropertyLoader;
-
-import java.sql.*;
+import java.sql.Connection;
 import java.sql.Date;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import util.PropertyLoader;
 
 public class DatabaseHelper {
     private static final Logger LOGGER = Logger.getLogger(DatabaseHelper.class.getName());
@@ -121,7 +131,15 @@ public class DatabaseHelper {
         try (Connection conn = connect();
              Statement stmt = conn.createStatement()) {
             stmt.executeUpdate(createTableSQL);
-            System.out.println("Table Created");
+            
+            // Add missing column if table exists but column doesn't
+            try {
+                stmt.executeUpdate("ALTER TABLE predictions ADD COLUMN IF NOT EXISTS stock_symbol VARCHAR(10) NOT NULL");
+            } catch (SQLException e) {
+                // Column already exists, ignore
+            }
+            
+            System.out.println("Table Created/Updated");
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error creating predictions table", e);
             throw e;

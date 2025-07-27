@@ -1,19 +1,23 @@
-import util.CustomChartUtils;
-import util.DataPreprocessor;
-import util.TechnicalIndicators;
-import lstm.LSTMNetwork;
-import lstm.LSTMTrainer;
-import database.DatabaseHelper;
-
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Scanner;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
+
+import database.DatabaseHelper;
+import lstm.LSTMNetwork;
+import lstm.LSTMTrainer;
+import util.CustomChartUtils;
+import util.DataPreprocessor;
+import util.TechnicalIndicators;
 
 public class Main {
     static String version = "v1";
@@ -24,15 +28,15 @@ public class Main {
     private static final String BLUE = "\u001B[34m";
     private static final String YELLOW = "\u001B[33m";
 
-    static int hiddenSize = 20;
+    static int hiddenSize = 32;
     static int denseSize = 3;
-    static int inputSize = 8;
+    static int inputSize = 18; // Changed from 8 to 18
     static int outputSize = 1;
-    static int epoch = 10;
-    static int batch = 16;
-    static double trainingRate = 0.1;
+    static int epoch = 100;
+    static int batch = 64;
+    static double trainingRate = 0.01; // Increased from 0.0001
 
-    static double threshold = 0.1;
+    static double threshold = 0.001; // FIXED: Reduced from 0.1 to 0.001 (0.1%)
     static int interval = 100;
 
     private static final String BASE_DIR = "output_"+version+"_e"+epoch+"_b"+batch+"_h"+hiddenSize;
@@ -67,7 +71,46 @@ public class Main {
 
             double[][] stockDataArray = allStockData.toArray(new double[0][]);
 
+            // Stock data debug
+            System.out.println("=== Stock Data Debug ===");
+            for (int i = 0; i < Math.min(5, stockDataArray.length); i++) {
+                System.out.printf("Row %d: Table=%.2f, Close=%.2f, High=%.2f, Low=%.2f, Open=%.2f%n", 
+                    i, stockDataArray[i][0], stockDataArray[i][1], stockDataArray[i][2], 
+                    stockDataArray[i][3], stockDataArray[i][4]);
+            }
+            System.out.println("=== End Stock Data Debug ===");
+
             double[][] technicalIndicators = TechnicalIndicators.calculate(stockDataArray, 16, 3);
+
+            // Technical indicators debug
+            System.out.println("=== Technical Indicators Debug ===");
+            System.out.println("Total indicators: " + technicalIndicators[0].length);
+            for (int i = 0; i < Math.min(5, technicalIndicators.length); i++) {
+                System.out.printf("Row %d: EMA=%.2f, SMA=%.2f, RSI=%.2f, ATR=%.2f, MACD=%.2f, Signal=%.2f, Histogram=%.2f, BB_Upper=%.2f, BB_Lower=%.2f, Stoch_K=%.2f, Stoch_D=%.2f%n", 
+                    i, 
+                    technicalIndicators[i][0],  // EMA
+                    technicalIndicators[i][1],  // SMA
+                    technicalIndicators[i][2],  // RSI
+                    technicalIndicators[i][3],  // ATR
+                    technicalIndicators[i][4],  // MACD
+                    technicalIndicators[i][5],  // Signal
+                    technicalIndicators[i][6],  // Histogram
+                    technicalIndicators[i][8],  // BB Upper
+                    technicalIndicators[i][9],  // BB Lower
+                    technicalIndicators[i][10], // Stochastic %K
+                    technicalIndicators[i][11]  // Stochastic %D
+                );
+            }
+
+            // Check for NaN/Inf in technical indicators
+            for (int i = 0; i < technicalIndicators.length; i++) {
+                for (int j = 0; j < technicalIndicators[i].length; j++) {
+                    if (!Double.isFinite(technicalIndicators[i][j])) {
+                        System.err.println("Invalid technical indicator at [" + i + "][" + j + "]: " + technicalIndicators[i][j]);
+                    }
+                }
+            }
+            System.out.println("=== End Debug ===");
 
             double[][] extendedData = DataPreprocessor.addFeatures(stockDataArray, technicalIndicators);
 
@@ -78,6 +121,28 @@ public class Main {
             double[][] validationData = Arrays.copyOfRange(testData, 0, testData.length / 5);
             double[][] finalTestData = Arrays.copyOfRange(testData, testData.length / 5, testData.length);
 
+            // MOVED DEBUG OUTPUT HERE (after variables are defined)
+            System.out.println("=== Dataset Debug ===");
+            System.out.println("Final train data size: " + trainData.length);
+            System.out.println("Final test data size: " + testData.length);
+            System.out.println("Final validation data size: " + validationData.length);
+            System.out.println("Final finalTestData size: " + finalTestData.length);
+
+            // Check first few rows of final test data
+            for (int i = 0; i < Math.min(3, finalTestData.length - 1); i++) {
+                double currentPrice = finalTestData[i][1];
+                double nextPrice = finalTestData[i + 1][1];
+                double change = (nextPrice - currentPrice) / currentPrice;
+                System.out.printf("Test sample %d: Current=%.2f, Next=%.2f, Change=%.4f%%\n", 
+                    i, currentPrice, nextPrice, change * 100);
+            }
+            System.out.println("=== End Dataset Debug ===");
+
+            checkForNaN(trainData, "trainData");
+            checkForNaN(validationData, "validationData");
+            checkForNaN(finalTestData, "finalTestData");
+
+            // Rest of your main method...
             LOGGER.log(Level.INFO, BLUE + "Training data size: " + trainData.length + RESET);
             LOGGER.log(Level.INFO, BLUE + "Validation data size: " + validationData.length + RESET);
             LOGGER.log(Level.INFO, BLUE + "Final test data size: " + finalTestData.length + RESET);
@@ -125,6 +190,10 @@ public class Main {
             CustomChartUtils.saveAccuracyChart("Model Accuracy", epochList, accuracyList, validationAccuracyList, accuracyChartDir + File.separator + "model_accuracy.png", "Epochs", "Accuracy",interval);
             CustomChartUtils.saveLossChart("Model Loss", epochList, lossList, validationLossList, accuracyChartDir + File.separator + "model_loss.png", "Epochs", "Loss",interval);
 
+            // After training
+            System.out.println("Chart data points: " + epochList.size());
+            System.out.println("Accuracy range: " + Collections.min(accuracyList) + " to " + Collections.max(accuracyList));
+            System.out.println("Loss range: " + Collections.min(lossList) + " to " + Collections.max(lossList));
         } else {
             min = lstm.getMin();
             max = lstm.getMax();
@@ -214,16 +283,20 @@ public class Main {
             for (int batch = 0; batch < batches; batch++) {
                 double[][] batchData = Arrays.copyOfRange(trainData, batch * batchSize, (batch + 1) * batchSize);
                 for (double[] data : batchData) {
-                    double[] input = Arrays.copyOfRange(data, 0, data.length);
+                    double[] hiddenState = new double[lstm.getHiddenSize()];
+                    double[] cellState = new double[lstm.getHiddenSize()];
+                    
+                    double[] input = Arrays.copyOf(data, inputSize);
                     double[] target = new double[]{data[data.length - 1]};
-                    lstm.backpropagate(input, target, learningRate);
-
-                    double[] output = lstm.forward(input, lstm.getHiddenState(), lstm.getCellState());
-
+                    
+                    // CORRECT ORDER: Forward first, then backprop
+                    double[] output = lstm.forward(input, hiddenState, cellState);
                     if (output == null) {
                         LOGGER.severe("NaN value encountered during forward pass. Stopping training.");
                         return new double[]{0, 0};
                     }
+                    
+                    lstm.backpropagate(input, target, learningRate);
                 }
             }
 
@@ -276,7 +349,8 @@ public class Main {
         double totalAccuracy = 0;
 
         for (int i = 0; i < testData.length - 1; i++) {
-            double[] input = Arrays.copyOf(testData[i], testData[i].length - 1);
+            double[] input = Arrays.copyOf(testData[i], inputSize);
+            checkForNaN1D(input, "input to LSTM (testModel)");
             double[] output = lstm.forward(input, lstm.getHiddenState(), lstm.getCellState());
             if (output == null) {
                 continue;
@@ -285,36 +359,44 @@ public class Main {
             double actual = testData[i + 1][1];
             double currentClosePrice = testData[i][1];
 
-
-            double lastClosePrice = testData[i][1];
-            prediction = applyPredictionConstraints(prediction, lastClosePrice);
+            // Apply consistent constraints
+            prediction = applyPredictionConstraints(prediction, currentClosePrice);
 
             double accuracy = calculatePredictionAccuracy(prediction, actual, currentClosePrice);
             totalAccuracy += accuracy;
+
+            // In testModel, add debug output
+            if (i < 5) { // Debug first 5 predictions
+                System.out.printf("Raw prediction: %.4f, Last close: %.4f, After constraints: %.4f, Actual: %.4f%n", 
+                    output[0], currentClosePrice, prediction, actual);
+            }
         }
         return totalAccuracy / (testData.length - 1);
     }
 
     private static double applyPredictionConstraints(double prediction, double lastClosePrice) {
-        double maxChange = 0.08 * lastClosePrice;
-        double minPrice = lastClosePrice * 0.92;
-        double maxPrice = lastClosePrice * 1.08;
+        // More realistic daily change limits (3-5% instead of 8%)
+        double maxDailyChange = 0.05; // 5% max daily change
+        double minPrice = lastClosePrice * (1 - maxDailyChange);
+        double maxPrice = lastClosePrice * (1 + maxDailyChange);
 
+        // Apply realistic constraints
         if (prediction < minPrice) {
             prediction = minPrice;
         } else if (prediction > maxPrice) {
             prediction = maxPrice;
         }
 
-        prediction = Math.max(0, Math.min(1, prediction));
+        // Remove this line - it's forcing predictions to [0,1] which is wrong
+        // prediction = Math.max(0, Math.min(1, prediction));
 
         return prediction;
     }
 
 
     private static double calculatePredictionAccuracy(double prediction, double actual, double currentClosePrice) {
-        double maxChange = 0.08 * currentClosePrice;
-        double diff = Math.abs(prediction - actual);;
+        double maxChange = 0.05 * currentClosePrice; // FIXED: Match the constraint limit (was 0.08)
+        double diff = Math.abs(prediction - actual);
 
         if (diff > maxChange) {
             return 0;
@@ -328,22 +410,23 @@ public class Main {
 
     private static double calculateLoss(LSTMNetwork lstm, double[][] data) {
         double totalLoss = 0;
-        double maxChange = 0.08;
+        double maxChange = 0.05; // Match the constraint limit
 
         for (int i = 0; i < data.length - 1; i++) {
-            double[] input = Arrays.copyOf(data[i], data[i].length - 1);
+            double[] input = Arrays.copyOf(data[i], inputSize);
+            checkForNaN1D(input, "input to calculateLoss");
+            
             double lastClosePrice = data[i][1];
             double[] output = lstm.forward(input, lstm.getHiddenState(), lstm.getCellState());
+            
+            if (output == null) {
+                continue;
+            }
+            
             double prediction = output[0];
 
-            double minPrice = lastClosePrice * (1 - maxChange);
-            double maxPrice = lastClosePrice * (1 + maxChange);
-
-            if (prediction < minPrice) {
-                prediction = minPrice;
-            } else if (prediction > maxPrice) {
-                prediction = maxPrice;
-            }
+            // Apply the same constraints as in applyPredictionConstraints
+            prediction = applyPredictionConstraints(prediction, lastClosePrice);
 
             double actual = data[i + 1][1];
             double diff = Math.abs(prediction - actual);
@@ -415,38 +498,39 @@ public class Main {
         List<double[]> stockData = dbHelper.loadStockData(stockSymbol);
         double[][] stockDataArray = stockData.toArray(new double[0][]);
 
-        double[][] technicalIndicators = TechnicalIndicators.calculate(stockDataArray,  16, 3);
-
+        double[][] technicalIndicators = TechnicalIndicators.calculate(stockDataArray, 16, 3);
         double[][] extendedData = DataPreprocessor.addFeatures(stockDataArray, technicalIndicators);
-
+        
+        // FIXED: Store original last close price BEFORE normalization
+        double originalLastClose = extendedData[extendedData.length - 1][1];
+        
         extendedData = DataPreprocessor.normalize(extendedData, min, max);
 
         int days = 1;
-
         double[] predictions = new double[days];
+        
         for (int i = 0; i < days; i++) {
-            double[] input = Arrays.copyOfRange(extendedData[extendedData.length - 1], 0, extendedData[0].length);
+            double[] input = Arrays.copyOf(extendedData[extendedData.length - 1], inputSize);
             double[] output = lstm.forward(input, lstm.getHiddenState(), lstm.getCellState());
+            
+            if (output == null) {
+                System.err.println("LSTM forward pass returned null");
+                return;
+            }
+            
             double prediction = output[0];
-
-            double lastClosePrice = extendedData[extendedData.length - 1][1];
-
-            prediction = applyPredictionConstraints(prediction, lastClosePrice);
-
+            
+            // FIXED: Use original price for constraints, not normalized
+            prediction = applyPredictionConstraints(prediction, originalLastClose);
             predictions[i] = prediction;
-
-            double[] newInput = new double[extendedData[0].length];
-            System.arraycopy(input, 1, newInput, 0, input.length - 1);
-            newInput[newInput.length - 1] = predictions[i];
-            extendedData = Arrays.copyOf(extendedData, extendedData.length + 1);
-            extendedData[extendedData.length - 1] = newInput;
         }
 
-        predictions = DataPreprocessor.denormalize(predictions, min[min.length - 1], max[max.length - 1]);
+        // FIXED: Don't denormalize - predictions are already in original scale
+        // predictions = DataPreprocessor.denormalize(predictions, min[min.length - 1], max[max.length - 1]);
 
         double[] actualPrices = new double[days];
         for (int i = 0; i < days; i++) {
-            actualPrices[i] = stockDataArray[stockDataArray.length - 1][1];
+            actualPrices[i] = originalLastClose; // Use original price
         }
 
         dbHelper.savePredictions(stockSymbol, predictions, actualPrices);
@@ -458,7 +542,13 @@ public class Main {
         double[][] trainData = Arrays.copyOfRange(data, 0, trainSize);
         double[][] testData = Arrays.copyOfRange(data, trainSize, data.length);
 
-        min = DataPreprocessor.calculateMin(data);
+        // TEMPORARILY DISABLE BALANCING FOR TESTING
+        // trainData = balanceDataset(trainData);
+        // testData = balanceDataset(testData);
+        
+        System.out.println("Using original unbalanced data for testing");
+        
+        min = DataPreprocessor.calculateMin(data); // Use original data for min/max
         max = DataPreprocessor.calculateMax(data);
 
         double bufferPercentage = 0.40;
@@ -478,12 +568,113 @@ public class Main {
             max[i] = bufferedMax;
         }
 
+        System.out.println("Min close price: " + min[1] + ", Max close price: " + max[1]);
+        System.out.println("Price range: " + (max[1] - min[1]));
 
         trainData = DataPreprocessor.normalize(trainData, min, max);
         testData = DataPreprocessor.normalize(testData, min, max);
-
+        
         return new double[][][]{trainData, testData};
     }
 
+    private static double[][] balanceDataset(double[][] data) {
+        List<double[]> positiveClass = new ArrayList<>();
+        List<double[]> negativeClass = new ArrayList<>();
+        
+        System.out.println("Original data size: " + data.length);
+        
+        for (int i = 0; i < data.length - 1; i++) {
+            double currentPrice = data[i][1];  // close price
+            double nextPrice = data[i + 1][1]; // next day's close price
+            
+            // Calculate percentage change
+            double priceChange = (nextPrice - currentPrice) / currentPrice;
+            
+            // FIXED: Use smaller, more realistic thresholds
+            if (priceChange > 0.001) { // Up more than 0.1% (was 0.5%)
+                positiveClass.add(data[i]);
+            } else if (priceChange < -0.001) { // Down more than 0.1% (was 0.5%)
+                negativeClass.add(data[i]);
+            }
+            // Skip samples with very small changes (-0.1% to +0.1%)
+        }
+        
+        System.out.println("Positive samples: " + positiveClass.size());
+        System.out.println("Negative samples: " + negativeClass.size());
+        
+        // Use the smaller class size for both
+        int minSize = Math.min(positiveClass.size(), negativeClass.size());
+        
+        // FIXED: Lower minimum threshold
+        if (minSize < 100) { // Reduced from 1000
+            System.err.println("Warning: Small balanced dataset size: " + minSize);
+            System.err.println("Using original data without balancing");
+            return data; // Return original data if balancing creates too small dataset
+        }
+        
+        List<double[]> balancedData = new ArrayList<>();
+        balancedData.addAll(positiveClass.subList(0, minSize));
+        balancedData.addAll(negativeClass.subList(0, minSize));
+        
+        System.out.println("Balanced dataset: " + minSize + " positive, " + minSize + " negative samples");
+        
+        return balancedData.toArray(new double[0][]);
+    }
 
+    private static double[][] balanceDatasetWithLargerThreshold(double[][] data) {
+        List<double[]> positiveClass = new ArrayList<>();
+        List<double[]> negativeClass = new ArrayList<>();
+        
+        for (int i = 0; i < data.length - 1; i++) {
+            double currentPrice = data[i][1];
+            double nextPrice = data[i + 1][1];
+            
+            double priceChange = (nextPrice - currentPrice) / currentPrice;
+            
+            // Use larger thresholds
+            if (priceChange > 0.02) { // Up more than 2%
+                positiveClass.add(data[i]);
+            } else if (priceChange < -0.02) { // Down more than 2%
+                negativeClass.add(data[i]);
+            }
+        }
+        
+        int minSize = Math.min(positiveClass.size(), negativeClass.size());
+        
+        if (minSize < 100) {
+            System.err.println("Warning: Very small balanced dataset, returning original data");
+            return data;
+        }
+        
+        List<double[]> balancedData = new ArrayList<>();
+        balancedData.addAll(positiveClass.subList(0, minSize));
+        balancedData.addAll(negativeClass.subList(0, minSize));
+        
+        System.out.println("Balanced dataset (2% threshold): " + minSize + " positive, " + minSize + " negative samples");
+        
+        return balancedData.toArray(new double[0][]);
+    }
+
+    private static void checkForNaN(double[][] data, String label) {
+        for (int i = 0; i < data.length; i++) {
+            for (int j = 0; j < data[i].length; j++) {
+                if (Double.isNaN(data[i][j]) || Double.isInfinite(data[i][j])) {
+                    System.err.println("Invalid value in " + label + " at [" + i + "][" + j + "]: " + data[i][j]);
+                }
+            }
+        }
+    }
+
+    private static void checkForNaN1D(double[] data, String label) {
+        boolean found = false;
+        for (int i = 0; i < data.length; i++) {
+            if (Double.isNaN(data[i]) || Double.isInfinite(data[i])) {
+                System.err.println("Invalid value in " + label + " at [" + i + "]: " + data[i]);
+                found = true;
+            }
+        }
+        if (found) {
+            System.err.println("Full input vector for " + label + ": " + Arrays.toString(data));
+        }
+    }
 }
