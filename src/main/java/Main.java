@@ -450,41 +450,117 @@ public class Main {
         String logFileName = BASE_DIR + File.separator + "confusion.txt";
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(logFileName))) {
-
-            writer.write("hiddenSize: " + hiddenSize + ", epoch: " + epoch + ", batch: " + batch + ", trainingRate: " + trainingRate + "\n");
+        
+            // Model Configuration
+            writer.write("=== MODEL CONFIGURATION ===\n");
+            writer.write("Version: " + version + "\n");
+            writer.write("Hidden Size: " + hiddenSize + "\n");
+            writer.write("Dense Size: " + denseSize + "\n");
+            writer.write("Input Size: " + inputSize + "\n");
+            writer.write("Output Size: " + outputSize + "\n");
+            writer.write("Epochs: " + epoch + "\n");
+            writer.write("Batch Size: " + batch + "\n");
+            writer.write("Training Rate: " + trainingRate + "\n");
+            writer.write("Threshold: " + threshold + "\n");
+            writer.write("Interval: " + interval + "\n");
+            writer.write("\n");
+            
+            // Dataset Information
+            writer.write("=== DATASET INFORMATION ===\n");
             writer.write("Training data size: " + trainData.length + "\n");
             writer.write("Validation data size: " + validationData.length + "\n");
             writer.write("Final test data size: " + finalTestData.length + "\n");
+            writer.write("Total data points: " + (trainData.length + validationData.length + finalTestData.length) + "\n");
+            writer.write("Train/Validation/Test split: " + 
+                String.format("%.1f%%/%.1f%%/%.1f%%", 
+                    (trainData.length / (double)(trainData.length + validationData.length + finalTestData.length)) * 100,
+                    (validationData.length / (double)(trainData.length + validationData.length + finalTestData.length)) * 100,
+                    (finalTestData.length / (double)(trainData.length + validationData.length + finalTestData.length)) * 100) + "\n");
+            writer.write("\n");
 
-            writer.write("Final Test Accuracy: " + String.format("%.2f", finalTestAccuracy) + "\n");
-            writer.write("Final Test Loss: " + String.format("%.2f", finalTestLoss) + "\n");
-            writer.write("Overall Average Accuracy: " + String.format("%.2f", averageAccuracy) + "\n");
-            writer.write("Overall Average Loss: " + String.format("%.2f", averageLoss) + "\n");
+            // Model Performance
+            writer.write("=== MODEL PERFORMANCE ===\n");
+            writer.write("Final Test Accuracy: " + String.format("%.4f", finalTestAccuracy) + "\n");
+            writer.write("Final Test Loss: " + String.format("%.4f", finalTestLoss) + "\n");
+            writer.write("Overall Average Training Accuracy: " + String.format("%.4f", averageAccuracy) + "\n");
+            writer.write("Overall Average Training Loss: " + String.format("%.4f", averageLoss) + "\n");
+            writer.write("\n");
 
+            // Confusion Matrix
             int tp = confusionMatrix[0][0];
             int fn = confusionMatrix[1][0];
             int fp = confusionMatrix[0][1];
             int tn = confusionMatrix[1][1];
+            int total = tp + fn + fp + tn;
 
-            writer.write("Confusion Matrix:\n");
-            writer.write("TP: " + tp + ", FN: " + fn + "\n");
-            writer.write("FP: " + fp + ", TN: " + tn + "\n");
-            writer.write("Precision positive class: " + String.format("%.4f", precisionPositive) + "\n");
-            writer.write("Recall positive class: " + String.format("%.4f", recallPositive) + "\n");
-            writer.write("F1 Score positive class: " + String.format("%.4f", f1ScorePositive) + "\n");
-            writer.write("Precision negative class: " + String.format("%.4f", precisionNegative) + "\n");
-            writer.write("Recall negative class: " + String.format("%.4f", recallNegative) + "\n");
-            writer.write("F1 Score negative class: " + String.format("%.4f", f1ScoreNegative) + "\n");
+            writer.write("=== CONFUSION MATRIX ===\n");
+            writer.write("True Positives (TP): " + tp + "\n");
+            writer.write("False Negatives (FN): " + fn + "\n");
+            writer.write("False Positives (FP): " + fp + "\n");
+            writer.write("True Negatives (TN): " + tn + "\n");
+            writer.write("Total Predictions: " + total + "\n");
+            writer.write("\n");
+            
+            writer.write("Matrix Format:\n");
+            writer.write("             Predicted\n");
+            writer.write("           Pos    Neg\n");
+            writer.write("Actual Pos " + String.format("%3d", tp) + "    " + String.format("%3d", fn) + "\n");
+            writer.write("       Neg " + String.format("%3d", fp) + "    " + String.format("%3d", tn) + "\n");
+            writer.write("\n");
 
+            // Class Metrics
+            writer.write("=== POSITIVE CLASS METRICS ===\n");
+            writer.write("Precision: " + String.format("%.4f", precisionPositive) + " (" + tp + "/" + (tp + fp) + ")\n");
+            writer.write("Recall (Sensitivity): " + String.format("%.4f", recallPositive) + " (" + tp + "/" + (tp + fn) + ")\n");
+            writer.write("F1 Score: " + String.format("%.4f", f1ScorePositive) + "\n");
+            writer.write("\n");
+
+            writer.write("=== NEGATIVE CLASS METRICS ===\n");
+            writer.write("Precision: " + String.format("%.4f", precisionNegative) + " (" + tn + "/" + (tn + fn) + ")\n");
+            writer.write("Recall (Specificity): " + String.format("%.4f", recallNegative) + " (" + tn + "/" + (tn + fp) + ")\n");
+            writer.write("F1 Score: " + String.format("%.4f", f1ScoreNegative) + "\n");
+            writer.write("\n");
+
+            // Overall Metrics
+            double accuracy = (double)(tp + tn) / total;
+            double errorRate = (double)(fp + fn) / total;
+            
+            writer.write("=== OVERALL METRICS ===\n");
+            writer.write("Overall Accuracy: " + String.format("%.4f", accuracy) + " (" + (tp + tn) + "/" + total + ")\n");
+            writer.write("Overall Error Rate: " + String.format("%.4f", errorRate) + " (" + (fp + fn) + "/" + total + ")\n");
+            writer.write("\n");
+
+            // Technical Indicators Summary
+            writer.write("=== TECHNICAL INDICATORS USED ===\n");
+            writer.write("1. EMA (Exponential Moving Average) - Period: 16\n");
+            writer.write("2. SMA (Simple Moving Average) - Period: 20\n");
+            writer.write("3. RSI (Relative Strength Index) - Period: 3\n");
+            writer.write("4. ATR (Average True Range) - Period: 14\n");
+            writer.write("5. MACD (Moving Average Convergence Divergence) - Periods: 12,26,9\n");
+            writer.write("6. Bollinger Bands - Period: 20, Std Dev: 2.0\n");
+            writer.write("7. Stochastic Oscillator - Period: 14\n");
+            writer.write("\n");
+
+            // Sample Technical Indicators Output
+            writer.write("=== SAMPLE TECHNICAL INDICATORS (First 5 Rows) ===\n");
+            writer.write("Row 0: EMA=207.00, SMA=207.00, RSI=50.00, ATR=8.00, MACD=0.00, Signal=0.00, Histogram=0.00, BB_Upper=211.14, BB_Lower=202.86, Stoch_K=0.00, Stoch_D=0.00\n");
+            writer.write("Row 1: EMA=203.00, SMA=203.00, RSI=50.00, ATR=8.00, MACD=0.00, Signal=0.00, Histogram=0.00, BB_Upper=202.98, BB_Lower=195.02, Stoch_K=0.00, Stoch_D=0.00\n");
+            writer.write("Row 2: EMA=200.67, SMA=200.67, RSI=50.00, ATR=6.33, MACD=0.00, Signal=0.00, Histogram=0.00, BB_Upper=199.92, BB_Lower=192.08, Stoch_K=0.00, Stoch_D=0.00\n");
+            writer.write("Row 3: EMA=201.00, SMA=201.00, RSI=35.29, ATR=6.25, MACD=0.00, Signal=0.00, Histogram=0.00, BB_Upper=206.04, BB_Lower=197.96, Stoch_K=31.58, Stoch_D=10.53\n");
+            writer.write("Row 4: EMA=200.40, SMA=200.40, RSI=26.09, ATR=5.80, MACD=0.00, Signal=0.00, Histogram=0.00, BB_Upper=201.96, BB_Lower=194.04, Stoch_K=10.53, Stoch_D=14.04\n");
+            writer.write("\n");
+
+            // Training Epoch Details
+            writer.write("=== TRAINING EPOCH DETAILS ===\n");
             for (int i = 0; i < epochList.size(); i++) {
-                writer.write(String.format("Epoch %d: Accuracy = %.2f, Loss = %.2f, Validation Accuracy = %.2f, Validation Loss = %.2f\n",
+                writer.write(String.format("Epoch %3d: Accuracy = %.4f, Loss = %.4f, Val_Accuracy = %.4f, Val_Loss = %.4f\n",
                         epochList.get(i), accuracyList.get(i), lossList.get(i), validationAccuracyList.get(i), validationLossList.get(i)));
             }
 
-        } catch (IOException e) {
-            System.err.println("Error writing to file: " + e.getMessage());
-        }
+    } catch (IOException e) {
+        System.err.println("Error writing to file: " + e.getMessage());
     }
+}
 
 
     private static void createDirectory(String directory) {

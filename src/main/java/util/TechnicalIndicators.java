@@ -27,19 +27,31 @@ public class TechnicalIndicators {
         double[] ema = new double[prices.length];
         double multiplier = 2.0 / (period + 1);
 
-        // FIXED: Proper EMA initialization
-        ema[0] = prices[0]; // Start with first price
-
-        for (int i = 1; i < prices.length; i++) {
-            if (i < period) {
-                // For early values, use SMA of available data
-                double sum = 0;
-                for (int j = 0; j <= i; j++) {
-                    sum += prices[j];
-                }
-                ema[i] = sum / (i + 1);
-            } else {
-                // Standard EMA calculation
+        // FIXED: Better initialization for different periods
+        if (prices.length >= period) {
+            // Calculate SMA for the first EMA value
+            double sum = 0;
+            for (int i = 0; i < period; i++) {
+                sum += prices[i];
+            }
+            ema[period - 1] = sum / period;
+            
+            // Fill early values with progressive EMA approximation
+            ema[0] = prices[0];
+            for (int i = 1; i < period - 1; i++) {
+                // Use smaller multiplier for early values to create more responsive EMA
+                double earlyMultiplier = 2.0 / (i + 2);
+                ema[i] = ((prices[i] - ema[i - 1]) * earlyMultiplier) + ema[i - 1];
+            }
+            
+            // Calculate proper EMA for remaining values
+            for (int i = period; i < prices.length; i++) {
+                ema[i] = ((prices[i] - ema[i - 1]) * multiplier) + ema[i - 1];
+            }
+        } else {
+            // Not enough data for full period
+            ema[0] = prices[0];
+            for (int i = 1; i < prices.length; i++) {
                 ema[i] = ((prices[i] - ema[i - 1]) * multiplier) + ema[i - 1];
             }
         }
@@ -108,8 +120,27 @@ public class TechnicalIndicators {
             macd[i] = emaShort[i] - emaLong[i];
         }
         
-        // Calculate signal line (EMA of MACD)
-        double[] signal = calculateEMA(macd, signalPeriod);
+        // Calculate signal line (EMA of MACD) - but only after we have enough MACD data
+        double[] signal = new double[prices.length];
+        
+        // Wait until we have enough data for meaningful MACD
+        int startIndex = Math.max(longPeriod, signalPeriod);
+        
+        // Fill early signal values with 0
+        for (int i = 0; i < startIndex && i < prices.length; i++) {
+            signal[i] = 0.0;
+        }
+        
+        // Calculate proper signal line from sufficient data point
+        if (prices.length > startIndex) {
+            // Use a simplified EMA for signal line
+            double multiplier = 2.0 / (signalPeriod + 1);
+            signal[startIndex] = macd[startIndex]; // Initialize with first MACD value
+            
+            for (int i = startIndex + 1; i < prices.length; i++) {
+                signal[i] = ((macd[i] - signal[i - 1]) * multiplier) + signal[i - 1];
+            }
+        }
         
         // Calculate histogram
         double[] histogram = new double[prices.length];
@@ -198,10 +229,13 @@ public class TechnicalIndicators {
                 }
             }
             
-            if (highestHigh == lowestLow) {
-                k[i] = 50.0; // Avoid division by zero
+            // FIXED: Better calculation and avoid division by zero
+            if (highestHigh == lowestLow || lookback == 1) {
+                k[i] = 50.0; // Neutral value for first data point or no range
             } else {
                 k[i] = ((close[i] - lowestLow) / (highestHigh - lowestLow)) * 100;
+                // Ensure K is within valid range
+                k[i] = Math.max(0, Math.min(100, k[i]));
             }
             
             // Calculate %D (3-period SMA of %K)
@@ -212,6 +246,9 @@ public class TechnicalIndicators {
             } else {
                 d[i] = k[i];
             }
+            
+            // Ensure D is within valid range
+            d[i] = Math.max(0, Math.min(100, d[i]));
         }
         
         return new double[][]{k, d};
